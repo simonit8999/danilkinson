@@ -1,0 +1,739 @@
+
+    /* ----- RESET & GLOBAL ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      border-radius: 0 !important; /* brutalist no radius */
+    }
+
+    html, body {
+      height: 100%;
+      height: 100dvh; /* dynamic viewport height for mobile */
+      overflow: hidden; /* prevent page-level scrolling */
+    }
+
+    body {
+      background-color: #FFFFFF;
+      color: #000000;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: 400;
+      line-height: 1.2;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 64px; /* exact height of bottom nav */
+    }
+
+    /* ----- TYPOGRAPHY ----- */
+    h1, h2, h3, h4, .anton {
+      font-family: 'Anton', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    /* ----- LAYOUT & UTILS ----- */
+    .container {
+      flex: 1;
+      padding: 16px 12px 24px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0; /* critical for flex children to shrink */
+      padding-top: 56px; /* space for admin button */
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ----- FADE-IN ANIMATION ----- */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    /* ----- ADMIN BUTTON (top-right, no overlap) ----- */
+    #adminBtn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: #000;
+      color: #fff;
+      border: 2px solid #000;
+      padding: 8px 16px;
+      font-family: 'Anton', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 3px 3px 0 #000;
+      transition: none;
+    }
+
+    #adminBtn:hover {
+      background: #222;
+    }
+
+    /* ----- SCREEN HEADER ----- */
+    .screen-header {
+      font-family: 'Anton', sans-serif;
+      font-size: 38px;
+      line-height: 1;
+      margin: 28px 0 20px;
+      text-transform: uppercase;
+      border-bottom: 4px solid #000;
+      padding-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    /* ----- PRODUCT GRID (2 columns) ----- */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 12px;
+    }
+
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      background: #fff;
+      border: 2px solid #000;
+      transition: none;
+    }
+
+    .product-image-wrapper {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #eee;
+      overflow: hidden;
+      border-bottom: 2px solid #000;
+    }
+
+    .product-image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: none;
+    }
+
+    .sold-out-img {
+      filter: grayscale(100%) contrast(1.2);
+    }
+
+    .sold-out-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      color: #fff;
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      padding: 8px 16px;
+      border: 2px solid #fff;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .product-info {
+      padding: 8px 6px;
+      background: #fff;
+    }
+
+    .product-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .product-price {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ----- ARCHIVE GRID (square photos) ----- */
+    .archive-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .archive-item {
+      aspect-ratio: 1 / 1;
+      border: 2px solid #000;
+      background: #eee;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .archive-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: none;
+    }
+
+    /* fullscreen image overlay */
+    .fullscreen-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .fullscreen-overlay img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border: 4px solid #fff;
+    }
+
+    .fullscreen-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      color: #fff;
+      font-size: 32px;
+      font-family: 'Anton', sans-serif;
+      cursor: pointer;
+      background: #000;
+      border: 2px solid #fff;
+      padding: 4px 16px;
+      line-height: 1;
+    }
+
+    /* ----- PRODUCT DETAIL (screen 3) ----- */
+    /* Swipe carousel with overlay buttons */
+    .detail-carousel-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .detail-carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      border: 3px solid #000;
+      background: #eee;
+      scrollbar-width: none; /* Firefox */
+      scroll-behavior: smooth; /* smooth scroll for button clicks */
+    }
+    .detail-carousel::-webkit-scrollbar {
+      display: none;
+    }
+    .detail-carousel-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      scroll-snap-align: start;
+      position: relative;
+    }
+    .detail-carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none; /* prevents image drag interfering with swipe */
+    }
+
+    /* Navigation arrows */
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+      font-size: 24px;
+      font-family: 'Anton', sans-serif;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0.8;
+    }
+    .carousel-arrow:active {
+      opacity: 1;
+    }
+    .carousel-arrow.left { left: 8px; }
+    .carousel-arrow.right { right: 8px; }
+
+    /* indicator dots */
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .carousel-dot {
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      border: 1px solid #000;
+      cursor: pointer;
+    }
+    .carousel-dot.active {
+      background: #000;
+    }
+
+    .detail-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 34px;
+      line-height: 1;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .detail-price {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+    }
+
+    .detail-description {
+      font-family: 'Courier New', monospace;
+      font-size: 15px;
+      line-height: 1.5;
+      margin-bottom: 28px;
+      white-space: pre-line;
+      border-left: 4px solid #000;
+      padding-left: 12px;
+    }
+
+    .order-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: none;
+      font-family: 'Anton', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      padding: 18px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      border: 2px solid #000;
+      transition: none;
+    }
+
+    .order-btn:hover {
+      background: #222;
+    }
+
+    /* disabled / sold out state */
+    .order-btn:disabled {
+      background: #888 !important;
+      color: #fff !important;
+      border-color: #888 !important;
+      cursor: not-allowed !important;
+    }
+
+    /* ----- MODAL (order comment) ----- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #fff;
+      border: 4px solid #000;
+      max-width: 400px;
+      width: 100%;
+      padding: 24px 20px;
+      box-shadow: 12px 12px 0 #000;
+    }
+
+    .modal-content h3 {
+      font-family: 'Anton', sans-serif;
+      font-size: 24px;
+      margin-bottom: 16px;
+      border-bottom: 3px solid #000;
+      padding-bottom: 8px;
+    }
+
+    .modal-content textarea {
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      border: 3px solid #000;
+      padding: 12px;
+      margin-bottom: 16px;
+      resize: vertical;
+      min-height: 100px;
+      background: #fff;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      padding: 14px 0;
+      text-transform: uppercase;
+      border: 2px solid #000;
+      cursor: pointer;
+      transition: none;
+    }
+
+    .btn-send {
+      background: #000;
+      color: #fff;
+    }
+
+    .btn-cancel {
+      background: #fff;
+      color: #000;
+    }
+
+    /* ----- SEARCH INPUT ----- */
+    .search-input {
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      border: 3px solid #000;
+      padding: 14px 16px;
+      margin: 12px 0 24px;
+      background: #fff;
+      color: #000;
+      font-weight: 400;
+    }
+
+    .search-input::placeholder {
+      color: #999;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ----- HELP SCREEN ----- */
+    .help-block {
+      border: 3px solid #000;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .help-block p {
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .help-block a {
+      color: #000;
+      text-decoration: underline;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    /* ----- ADMIN SCREEN (list + form) ----- */
+    .admin-section-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 22px;
+      margin: 24px 0 12px;
+      border-bottom: 3px solid #000;
+      padding-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .admin-product-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 3px solid #000;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .admin-product-info {
+      flex: 1 1 120px;
+      min-width: 100px;
+    }
+
+    .admin-product-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .admin-product-price {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .admin-product-status {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .admin-actions button {
+      font-family: 'Anton', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      padding: 6px 8px;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: none;
+    }
+
+    .admin-actions button:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    .admin-actions button.danger {
+      border-color: #000;
+    }
+
+    .admin-add-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: 3px solid #000;
+      font-family: 'Anton', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      padding: 16px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin: 0 0 20px 0; /* Отступ снизу, чтобы список не прилипал */
+    }
+
+    .admin-form label {
+      display: block;
+      font-family: 'Anton', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      margin: 18px 0 6px;
+      text-transform: uppercase;
+    }
+
+    .admin-form input[type="text"],
+    .admin-form input[type="number"],
+    .admin-form textarea {
+      width: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      border: 3px solid #000;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .admin-form textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .admin-form .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .admin-form input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      accent-color: #000;
+      border: 2px solid #000;
+      cursor: pointer;
+    }
+
+    .admin-form .checkbox-row span {
+      font-family: 'Anton', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .admin-form button.save-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: 3px solid #000;
+      font-family: 'Anton', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      padding: 16px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 24px;
+    }
+
+    .admin-form button.back-btn {
+      width: 100%;
+      background: #fff;
+      color: #000;
+      border: 3px solid #000;
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      padding: 12px 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    /* ----- BOTTOM NAV (fixed) ----- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 4px solid #000;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 8px 4px;
+      z-index: 500;
+      height: 64px;
+      box-shadow: 0 -4px 0 #000;
+    }
+
+    .bottom-nav button {
+      background: transparent;
+      border: 3px solid #000;
+      font-family: 'Anton', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      padding: 8px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      color: #000;
+      flex: 1;
+      margin: 0 3px;
+      transition: none;
+      white-space: nowrap;
+    }
+
+    .bottom-nav button.active {
+      background: #000;
+      color: #fff;
+    }
+
+    .bottom-nav button:active {
+      background: #333;
+      color: #fff;
+    }
+
+    /* small screens */
+    @media (max-width: 380px) {
+      .bottom-nav button {
+        font-size: 12px;
+        padding: 6px 4px;
+      }
+    }
+  
+
+/* ----- REACT ROOT (layout glue, no visual change) ----- */
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ----- SAFE AREA FOR IPHONE / PWA ----- */
+body {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.bottom-nav {
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+/* ----- DETAIL: ORDER BUTTON ABOVE BOTTOM NAV ----- */
+.detail-screen {
+  padding-bottom: 80px;
+}
+
+/* ----- CARD QUICK ORDER BUTTON ----- */
+.card-order-btn {
+  width: 100%;
+  background: #000;
+  color: #fff;
+  border: 2px solid #000;
+  font-family: 'Anton', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  padding: 7px 4px;
+  margin-top: 6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.card-order-btn:hover {
+  background: #222;
+}
+.card-order-btn:active {
+  background: #333;
+}
+
+/* ----- ADMIN BUTTON: BOTTOM-RIGHT, NOT ON FIRST SCREEN ----- */
+#adminBtn {
+  top: auto;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  right: 8px;
+  font-size: 10px;
+  padding: 5px 8px;
+  opacity: 0.85;
+}
