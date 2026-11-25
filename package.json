@@ -11,7 +11,8 @@
     "server": "node server/index.mjs",
     "tunnel": "ngrok http 127.0.0.1:3000",
     "publish": "node server/publish.mjs",
-    "hash-admin": "node scripts/hash-admin.mjs"
+    "hash-admin": "node scripts/hash-admin.mjs",
+    "icons": "powershell -ExecutionPolicy Bypass -File scripts/make-icons.ps1"
   },
   "engines": {
     "node": ">=22.12.0"

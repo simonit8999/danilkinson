@@ -31,6 +31,12 @@ jobs:
         run: npm ci
 
       - name: Typecheck and build
+        # Админка на GitHub Pages должна знать адрес локального сервера (туннель ngrok).
+        # Settings -> Secrets and variables -> Actions -> Variables:
+        #   VITE_API_URL = https://<домен>.ngrok-free.dev   (без слэша в конце)
+        # Если переменная не задана, сайт работает от того же origin и API на Pages нет.
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: npm run build
 
       - name: Configure Pages

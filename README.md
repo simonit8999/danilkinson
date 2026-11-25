@@ -176,15 +176,32 @@ npm run publish     # копирует server/data/products.json в public/data/
 1. Запущен ли сервер: `npm.cmd run server` или `start-server.cmd`. Окно с
    `[server] catalog + site: http://127.0.0.1:3000` должно быть открыто.
    ngrok без сервера пробрасывает «в пустоту» — сайт откроется, API будет падать.
-2. Проверка API: `http://127.0.0.1:3000/api/health` → `{"ok":true,...}`.
+2. Посмотрите в плашке строку `API: ...` — это адрес, куда клиент реально шлёт
+   `/api/*`. Если там адрес GitHub Pages (`https://USER.github.io/REPO`), значит
+   сайт открыт не с сервера: API на Pages нет (404), плашка всегда будет `OFFLINE`.
+   Админку открывайте по ссылке туннеля: `https://ВАШ-ДОМЕН.ngrok-free.dev/?admin=1#/admin`.
+3. Проверка API: `http://127.0.0.1:3000/api/health` → `{"ok":true,...}`.
    Через туннель: `https://ВАШ-ДОМЕН.ngrok-free.dev/api/health`.
-3. Порт 3000 занят другим процессом — сервер не стартует, в консоли `EADDRINUSE`:
+4. Порт 3000 занят другим процессом — сервер не стартует, в консоли `EADDRINUSE`:
    `Get-NetTCPConnection -LocalPort 3000 -State Listen`.
-4. Сайт открыт не с сервера (например GitHub Pages): тогда в `.env` нужен
-   `VITE_API_URL=https://ВАШ-ДОМЕН.ngrok-free.dev` и пересборка.
-5. После запуска сервера страницу перезагружать не обязательно: клиент сам
+5. Сайт открыт не с сервера (например GitHub Pages): тогда нужен
+   `VITE_API_URL=https://ВАШ-ДОМЕН.ngrok-free.dev` при сборке (см. раздел
+   «Админка на GitHub Pages») и пересборка.
+6. После запуска сервера страницу перезагружать не обязательно: клиент сам
    опрашивает API каждые 15 секунд и возвращает статус в `ONLINE`.
    `SYNC: LOCAL ONLY` при живом сервере означает, что нет токена — войдите в админку заново.
+
+## Иконки приложения
+
+Иконки PWA и `apple-touch-icon` лежат в `public/icons/` и генерируются из одной картинки:
+
+```
+npm.cmd run icons -- -Source public\icons\avatar.png
+```
+
+Без `-Source` скрипт берёт `public/icons/avatar.png` (или `avatar.jpg`), а если их нет —
+скачивает логотип по умолчанию. После замены иконок поднимите версию кэша в
+`public/sw.js` (`ua-pwa-v4` → `ua-pwa-v5`) и пересоберите сайт (`npm.cmd run build`).
 
 ## Заказы
 
@@ -204,6 +221,30 @@ npm run publish     # копирует server/data/products.json в public/data/
 4. Дождитесь workflow «Deploy to GitHub Pages» и откройте `https://USER.github.io/REPO/`.
 
 Ссылка на товар: `https://USER.github.io/REPO/#/item/ua-001`.
+
+### Админка на GitHub Pages
+
+На Pages нет `/api/*`, поэтому админка там по умолчанию работает только локально
+(`SERVER: OFFLINE · SYNC: LOCAL ONLY`). Чтобы она сохраняла правки на ваш сервер:
+
+1. Settings → Secrets and variables → Actions → **Variables** → New repository variable:
+   `VITE_API_URL` = `https://ВАШ-ДОМЕН.ngrok-free.dev` (без слэша в конце).
+2. Перезапустите workflow (push или Actions → Run workflow) — сборка подставит адрес.
+3. Оставьте туннель и сервер включёнными. Домен ngrok не должен меняться —
+   используйте статический: `ngrok http --url=ВАШ-ДОМЕН.ngrok-free.dev 127.0.0.1:3000`.
+   Если домен сменился — обновите переменную и пересоберите сайт.
+
+Правки, сделанные в браузере на одном origin, не видны на другом (localStorage
+привязан к домену). Переносите их через `EXPORT JSON` → `IMPORT JSON`.
+
+### Если деплой упал
+
+`Error: Creating Pages deployment failed ... status: 500 ... is githubstatus.com
+reporting a Pages outage?` — это сбой на стороне GitHub, код тут не виноват.
+Откройте Actions → последний запуск «Deploy to GitHub Pages» → **Re-run failed jobs**
+(или Actions → Deploy to GitHub Pages → Run workflow). Проверить состояние:
+`https://www.githubstatus.com`.
+
 
 ## Тесты (необязательно)
 

@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CONFIG } from '../config';
 import { useAdmin } from '../context/AdminContext';
 import { useCatalog } from '../context/CatalogContext';
 import { copyText } from '../lib/clipboard';
@@ -57,6 +58,7 @@ export default function AdminPanel() {
     exportJson,
     importJson,
     resetLocal,
+    loading,
     dirty,
     stale,
     sync,
@@ -65,6 +67,10 @@ export default function AdminPanel() {
     publishNow,
     reloadFromServer,
   } = useCatalog();
+
+  // Куда клиент реально отправляет /api/*. Пусто в CONFIG.apiBase = тот же origin,
+  // поэтому на GitHub Pages (без VITE_API_URL) API там нет — плашка покажет OFFLINE.
+  const apiOrigin = CONFIG.apiBase || window.location.origin;
 
   const [loginValue, setLoginValue] = useState('');
   const [password, setPassword] = useState('');
@@ -269,10 +275,21 @@ export default function AdminPanel() {
       <div className="server-status" data-online={serverOnline ? 'true' : 'false'}>
         <span>{serverOnline ? 'SERVER: ONLINE' : 'SERVER: OFFLINE'}</span>
         <span>SYNC: {SYNC_LABEL[sync] ?? sync.toUpperCase()}</span>
+        <span>API: {apiOrigin}</span>
         {serverUpdatedAt && (
           <span>PUBLISHED: {new Date(serverUpdatedAt).toLocaleString()}</span>
         )}
       </div>
+
+      {!loading && !serverOnline && (
+        <div className="help-block">
+          <p>
+            СЕРВЕР НЕ ОТВЕЧАЕТ ПО АДРЕСУ {apiOrigin}. ПРАВКИ ОСТАЮТСЯ В ЭТОМ БРАУЗЕРЕ
+            (LOCAL ONLY). ОТКРОЙТЕ САЙТ ПО ССЫЛКЕ ТУННЕЛЯ NGROK, А НЕ С GITHUB PAGES,
+            ИЛИ ЗАДАЙТЕ VITE_API_URL ПРИ СБОРКЕ.
+          </p>
+        </div>
+      )}
 
       {notice && (
         <div className="help-block">
