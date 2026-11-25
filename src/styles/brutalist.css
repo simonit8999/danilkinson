@@ -13,6 +13,8 @@
       --photo-frame-color: #000000;
       --photo-frame-pad: 10px;
       --photo-frame-image: none;
+      /* Ширина верхней плашки на ПК (на телефоне плашка всегда на всю ширину) */
+      --header-max-width: 1200px;
     }
 
     html {
@@ -1099,3 +1101,50 @@ body::-webkit-scrollbar,
   height: 0;
   display: none;
 }
+
+/* ----- TOP BANNER: на ПК плашка уже и по центру (телефон не меняется) ----- */
+@media (min-width: 900px) {
+  .app-header {
+    max-width: var(--header-max-width);
+    margin: 0 auto;
+  }
+}
+
+/* ----- DETAIL: КНОПКА НАЗАД В ПРЕДЫДУЩЕЕ МЕНЮ ----- */
+.detail-topbar {
+  display: flex;
+  margin: 0 0 10px;
+}
+
+.detail-back {
+  background: #fff;
+  color: #000;
+  border: 3px solid #000;
+  font-family: 'Anton', sans-serif;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  padding: 10px 16px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: none;
+}
+
+.detail-back:hover {
+  background: #000;
+  color: #fff;
+}
+
+.detail-back:active {
+  background: #333;
+  color: #fff;
+}
+
+@media (min-width: 900px) {
+  /* Кнопка выровнена по той же сетке, что и карточка товара */
+  .detail-topbar {
+    max-width: 1120px;
+    margin: 8px auto 0;
+  }
+}
+

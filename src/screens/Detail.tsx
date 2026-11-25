@@ -12,9 +12,22 @@ export function Detail() {
 
   const product = products.find((item) => item.id === id);
 
+  // Возврат в предыдущее меню (каталог / архив / поиск).
+  // Если товар открыли по прямой ссылке, истории приложения нет — ведём в каталог.
+  const goBack = () => {
+    const state = window.history.state as { idx?: number } | null;
+    if (state && typeof state.idx === 'number' && state.idx > 0) navigate(-1);
+    else navigate('/');
+  };
+
   if (!product) {
     return (
       <div className="screen fade-in detail-screen">
+        <div className="detail-topbar">
+          <button className="detail-back" type="button" onClick={goBack}>
+            ← BACK
+          </button>
+        </div>
         <h1 className="screen-header">NOT FOUND</h1>
         <div className="help-block">
           <p>THIS ITEM IS GONE.</p>
@@ -28,6 +41,12 @@ export function Detail() {
 
   return (
     <div className="screen fade-in detail-screen">
+      <div className="detail-topbar">
+        <button className="detail-back" type="button" onClick={goBack}>
+          ← BACK
+        </button>
+      </div>
+
       <div className="detail-layout">
         <h1 className="detail-name">{product.name}</h1>
 
