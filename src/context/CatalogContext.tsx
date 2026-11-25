@@ -94,6 +94,17 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [serverUpdatedAt, setServerUpdatedAt] = useState<string | null>(null);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Значения для фоновой проверки сервера: чтобы интервал не пересоздавался.
+  const dirtyRef = useRef(false);
+  const serverOnlineRef = useRef(false);
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  useEffect(() => {
+    serverOnlineRef.current = serverOnline;
+  }, [serverOnline]);
 
   const publish = useCallback(async (next: Product[]) => {
     const token = sessionGet(CONFIG.storage.serverToken);
@@ -159,6 +170,62 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
     return () => {
       alive = false;
+    };
+  }, []);
+
+  // Сервер могли запустить позже страницы или он падал по пути: раз в 15 секунд
+  // проверяем каталог. Когда связь возвращается, статус снова SERVER: ONLINE
+  // без перезагрузки, и — если локальных правок нет — подтягивается серверный
+  // каталог. Локальные правки не перетираем, их публикует publish().
+  useEffect(() => {
+    let busy = false;
+
+    const check = async () => {
+      if (busy || document.hidden) return;
+      busy = true;
+
+      try {
+        const remote = await fetchRemoteCatalog();
+        const cameBack = !serverOnlineRef.current && remote !== null;
+
+        setServerOnline(remote !== null);
+        if (!remote) return;
+
+        if (remote.updatedAt) setServerUpdatedAt(remote.updatedAt);
+
+        // Без токена писать нельзя: LOCAL ONLY остаётся, даже когда сервер жив.
+        if (sessionGet(CONFIG.storage.serverToken)) {
+          setSync((prev) => (prev === 'offline' || prev === 'error' ? 'idle' : prev));
+        }
+
+        if (!cameBack) return;
+
+        const list = normalizeProducts(remote.products);
+        if (!list.length || dirtyRef.current || readLocal()) return;
+
+        setProducts(list);
+        setPublished(list);
+        setPublishedHash(hashString(JSON.stringify(list)));
+        setStale(false);
+      } finally {
+        busy = false;
+      }
+    };
+
+    const wake = () => {
+      void check();
+    };
+
+    const id = setInterval(wake, 15000);
+    window.addEventListener('online', wake);
+    window.addEventListener('focus', wake);
+    document.addEventListener('visibilitychange', wake);
+
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('online', wake);
+      window.removeEventListener('focus', wake);
+      document.removeEventListener('visibilitychange', wake);
     };
   }, []);
 

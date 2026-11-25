@@ -54,6 +54,9 @@ npm run publish    # server/data/products.json -> public/data/products.json
 
 Нужен Node.js >= 22.12 (требование Vite 8).
 
+Если PowerShell блокирует `npm.ps1` («выполнение сценариев отключено»), пишите
+`npm.cmd run ...` либо сразу запускайте сервер двойным кликом по `start-server.cmd`.
+
 ## Каталог
 
 Правится только `public/data/products.json` — массив объектов:
@@ -164,6 +167,24 @@ npm run publish     # копирует server/data/products.json в public/data/
 - Бэкапы каждой записи: `server/data/backups/` (хранятся последние 30).
 - Если сервер недоступен, админка продолжает работать локально (localStorage),
   а в статусе будет `SERVER: OFFLINE · SYNC: LOCAL ONLY`.
+
+### Если в админке `SERVER: OFFLINE`
+
+Плашка показывает `ONLINE` только когда клиент успешно получил `/api/catalog`.
+Проверяйте по порядку:
+
+1. Запущен ли сервер: `npm.cmd run server` или `start-server.cmd`. Окно с
+   `[server] catalog + site: http://127.0.0.1:3000` должно быть открыто.
+   ngrok без сервера пробрасывает «в пустоту» — сайт откроется, API будет падать.
+2. Проверка API: `http://127.0.0.1:3000/api/health` → `{"ok":true,...}`.
+   Через туннель: `https://ВАШ-ДОМЕН.ngrok-free.dev/api/health`.
+3. Порт 3000 занят другим процессом — сервер не стартует, в консоли `EADDRINUSE`:
+   `Get-NetTCPConnection -LocalPort 3000 -State Listen`.
+4. Сайт открыт не с сервера (например GitHub Pages): тогда в `.env` нужен
+   `VITE_API_URL=https://ВАШ-ДОМЕН.ngrok-free.dev` и пересборка.
+5. После запуска сервера страницу перезагружать не обязательно: клиент сам
+   опрашивает API каждые 15 секунд и возвращает статус в `ONLINE`.
+   `SYNC: LOCAL ONLY` при живом сервере означает, что нет токена — войдите в админку заново.
 
 ## Заказы
 
