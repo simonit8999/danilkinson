@@ -8,6 +8,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
+  const cover = product.cover || product.images[0];
+
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -30,20 +32,23 @@ export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
     >
       <div className="product-image-wrapper">
         <img
-          src={product.images[0]}
+          src={cover}
           alt={product.name}
           className={product.soldOut ? 'sold-out-img' : undefined}
           loading="lazy"
+          decoding="async"
         />
         {product.soldOut && <div className="sold-out-badge">SOLD OUT</div>}
       </div>
 
       <div className="product-info">
-        <div className="product-name">{product.name}</div>
+        <div className="product-name" title={product.name}>
+          {product.name}
+        </div>
         <div className="product-price">{product.price}</div>
         {!product.soldOut && (
           <button className="card-order-btn" type="button" onClick={onOrderClick}>
-            Добавить в корзину
+            BUY
           </button>
         )}
       </div>

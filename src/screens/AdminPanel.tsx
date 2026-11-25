@@ -10,6 +10,7 @@ interface FormState {
   price: string;
   description: string;
   images: string;
+  cover: string;
   soldOut: boolean;
 }
 
@@ -18,6 +19,7 @@ const EMPTY_FORM: FormState = {
   price: '',
   description: '',
   images: 'https://picsum.photos/id/100/600/600',
+  cover: '',
   soldOut: false,
 };
 
@@ -29,6 +31,7 @@ function toForm(product: Product | null): FormState {
     price: product.price,
     description: product.description,
     images: product.images.join('\n'),
+    cover: product.cover ?? '',
     soldOut: product.soldOut,
   };
 }
@@ -168,6 +171,7 @@ export default function AdminPanel() {
       price,
       description: form.description.trim(),
       images: images.length ? images : ['https://picsum.photos/id/100/600/600'],
+      cover: form.cover.trim() || undefined,
       soldOut: form.soldOut,
       archived: editing ? editing.archived : false,
     }, editing?.id);
@@ -326,6 +330,28 @@ export default function AdminPanel() {
               onChange={(event) => setForm({ ...form, images: event.target.value })}
               placeholder={'https://...jpg\nhttps://...jpg'}
             />
+
+            <label htmlFor="pf-cover">Главное фото для каталога (PNG без фона)</label>
+            <input
+              id="pf-cover"
+              type="text"
+              value={form.cover}
+              onChange={(event) => setForm({ ...form, cover: event.target.value })}
+              placeholder="./images/products/item.png"
+            />
+            {form.cover.trim() && (
+              <img
+                className="admin-cover-preview"
+                src={form.cover.trim()}
+                alt="cover preview"
+              />
+            )}
+            <p className="admin-hint">
+              Необязательно. Если пусто — в каталоге показывается первое фото из списка.
+              Файлы кладите в public/images/products/ и пишите путь вида
+              ./images/products/item.png. В каталоге фон прозрачный, в карточке товара —
+              белая подложка с тонкой рамкой.
+            </p>
 
             <div className="checkbox-row">
               <input

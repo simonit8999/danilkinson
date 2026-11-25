@@ -7,14 +7,30 @@
       border-radius: 0 !important; /* brutalist no radius */
     }
 
-    html, body {
+    :root {
+      --header-h: clamp(56px, 6.5vw, 128px);
+      --header-safe: env(safe-area-inset-top, 0px);
+      --paper: #f4efe6;
+      --photo-frame-color: #000000;
+      --photo-frame-pad: 10px;
+      --photo-frame-image: none;
+    }
+
+    html {
       height: 100%;
       height: 100dvh; /* dynamic viewport height for mobile */
       overflow: hidden; /* prevent page-level scrolling */
+      background: var(--paper);
+    }
+
+    html, body {
+      overflow: hidden;
     }
 
     body {
-      background-color: #FFFFFF;
+      height: 100%;
+      height: 100dvh;
+      background-color: transparent;
       color: #000000;
       font-family: 'Courier New', Courier, monospace;
       font-weight: 400;
@@ -23,6 +39,31 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       padding-bottom: 64px; /* exact height of bottom nav */
+      overflow-x: hidden;
+    }
+
+    /* ----- FULLSCREEN BACKGROUND ----- */
+    .app-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-color: var(--paper);
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
+
+    .app-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(250, 247, 241, 0.34) 0%,
+        rgba(250, 247, 241, 0.52) 45%,
+        rgba(250, 247, 241, 0.7) 100%
+      );
     }
 
     /* ----- TYPOGRAPHY ----- */
@@ -36,14 +77,15 @@
     /* ----- LAYOUT & UTILS ----- */
     .container {
       flex: 1;
-      padding: 16px 12px 24px;
-      max-width: 600px;
+      padding: calc(var(--header-h) + var(--header-safe) + 18px) 12px 28px;
+      max-width: 1500px;
       margin: 0 auto;
       width: 100%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       min-height: 0; /* critical for flex children to shrink */
-      padding-top: 56px; /* space for admin button */
+      position: relative;
+      z-index: 1;
     }
 
     .hidden {
@@ -83,6 +125,43 @@
       background: #222;
     }
 
+    /* ----- TOP BANNER (full width, fixed) ----- */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--header-h) + var(--header-safe));
+      padding-top: var(--header-safe);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(
+        180deg,
+        rgba(246, 241, 232, 0.99) 0%,
+        rgba(243, 238, 229, 0.94) 100%
+      );
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .app-header img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      mix-blend-mode: multiply;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
     /* ----- SCREEN HEADER ----- */
     .screen-header {
       font-family: 'Anton', sans-serif;
@@ -95,40 +174,60 @@
       letter-spacing: -0.01em;
     }
 
-    /* ----- PRODUCT GRID (2 columns) ----- */
+    /* ----- PRODUCT GRID (frameless catalog) ----- */
     .product-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px 14px;
+      align-items: start;
     }
 
     .product-card {
       display: flex;
       flex-direction: column;
+      min-width: 0;
       cursor: pointer;
-      background: #fff;
-      border: 2px solid #000;
+      background: transparent;
+      border: 0;
       transition: none;
+    }
+
+    .product-card:focus-visible {
+      outline: 2px solid #000;
+      outline-offset: 4px;
     }
 
     .product-image-wrapper {
       position: relative;
+      width: 100%;
       aspect-ratio: 1 / 1;
-      background: #eee;
+      background: transparent;
       overflow: hidden;
-      border-bottom: 2px solid #000;
+      border: 0;
+      padding: 5% 5% 2%;
     }
 
     .product-image-wrapper img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      object-position: center center;
       display: block;
-      transition: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .product-card:hover .product-image-wrapper img {
+      transform: scale(1.03);
+    }
+
+    @media (hover: none) {
+      .product-card:hover .product-image-wrapper img {
+        transform: none;
+      }
     }
 
     .sold-out-img {
-      filter: grayscale(100%) contrast(1.2);
+      filter: grayscale(100%) contrast(1.15) opacity(0.75);
     }
 
     .sold-out-badge {
@@ -139,47 +238,58 @@
       background: #000;
       color: #fff;
       font-family: 'Anton', sans-serif;
-      font-size: 16px;
+      font-size: clamp(10px, 1.1vw, 14px);
       letter-spacing: 2px;
-      padding: 8px 16px;
+      padding: 6px 12px;
       border: 2px solid #fff;
       text-transform: uppercase;
       white-space: nowrap;
+      z-index: 2;
     }
 
     .product-info {
-      padding: 8px 6px;
-      background: #fff;
+      padding: 2px 2px 0;
+      background: transparent;
+      min-width: 0;
     }
 
     .product-name {
       font-family: 'Anton', sans-serif;
-      font-size: 16px;
-      line-height: 1.2;
-      margin-bottom: 4px;
+      font-weight: 400;
+      font-size: clamp(11px, 1.05vw, 15px);
+      line-height: 1.1;
+      letter-spacing: 0.03em;
+      margin-bottom: 3px;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .product-price {
       font-family: 'Courier New', monospace;
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.5px;
+      font-size: clamp(10px, 0.85vw, 12px);
+      letter-spacing: 0.4px;
+      line-height: 1.2;
+      color: #111;
+      opacity: 0.88;
     }
 
     /* ----- ARCHIVE GRID (square photos) ----- */
     .archive-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 6px;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
     }
 
     .archive-item {
       aspect-ratio: 1 / 1;
-      border: 2px solid #000;
-      background: #eee;
+      border: 1px solid #000;
+      background: rgba(255, 255, 255, 0.65);
       cursor: pointer;
       overflow: hidden;
+      padding: 0;
     }
 
     .archive-item img {
@@ -227,7 +337,37 @@
     }
 
     /* ----- PRODUCT DETAIL (screen 3) ----- */
-    /* Swipe carousel with overlay buttons */
+    .detail-screen {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .detail-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .detail-name {
+      font-family: 'Anton', sans-serif;
+      font-size: clamp(24px, 4.6vw, 42px);
+      line-height: 1.02;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      margin: 2px 0 0;
+    }
+
+    .detail-gallery {
+      min-width: 0;
+    }
+
+    .detail-body {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Swipe carousel with framed photos */
     .detail-carousel-wrapper {
       position: relative;
       margin-bottom: 8px;
@@ -238,25 +378,48 @@
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
-      border: 3px solid #000;
-      background: #eee;
+      border: 0;
+      background: transparent;
       scrollbar-width: none; /* Firefox */
       scroll-behavior: smooth; /* smooth scroll for button clicks */
     }
     .detail-carousel::-webkit-scrollbar {
       display: none;
     }
+
+    /* Тонкая рамка. Белая подложка нужна, чтобы фото с фоном и PNG без фона
+       выглядели одинаково аккуратно. */
     .detail-carousel-slide {
       flex: 0 0 100%;
       width: 100%;
       aspect-ratio: 1 / 1;
       scroll-snap-align: start;
       position: relative;
+      box-sizing: border-box;
+      background: #ffffff;
+      border: 1px solid var(--photo-frame-color);
+      padding: var(--photo-frame-pad);
     }
+
+    /* Сюда позже можно подставить готовую PNG-рамку:
+       --photo-frame-image: url('./images/site/frame.png');
+       Вёрстку менять не придётся. */
+    .detail-carousel-slide::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: var(--photo-frame-image);
+      background-position: center center;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      pointer-events: none;
+      z-index: 2;
+    }
+
     .detail-carousel-slide img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       pointer-events: none; /* prevents image drag interfering with swipe */
     }
@@ -268,7 +431,7 @@
       transform: translateY(-50%);
       background: #000;
       color: #fff;
-      border: 2px solid #fff;
+      border: 1px solid #000;
       font-size: 24px;
       font-family: 'Anton', sans-serif;
       width: 36px;
@@ -296,30 +459,35 @@
     .carousel-dot {
       width: 10px;
       height: 10px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.8);
       border: 1px solid #000;
       cursor: pointer;
+      padding: 0;
     }
     .carousel-dot.active {
       background: #000;
     }
 
-    .detail-name {
-      font-family: 'Anton', sans-serif;
-      font-size: 34px;
-      line-height: 1;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-
     .detail-price {
       font-family: 'Courier New', monospace;
       font-weight: 700;
-      font-size: 22px;
+      font-size: clamp(16px, 1.7vw, 22px);
       letter-spacing: 1px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       border-bottom: 2px solid #000;
       padding-bottom: 8px;
+    }
+
+    .detail-soldout {
+      align-self: flex-start;
+      background: #000;
+      color: #fff;
+      font-family: 'Anton', sans-serif;
+      font-size: 14px;
+      letter-spacing: 2px;
+      padding: 6px 16px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
     }
 
     .detail-description {
@@ -643,7 +811,7 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      padding: 8px 4px;
+      padding: 8px max(4px, calc((100vw - 1500px) / 2));
       z-index: 500;
       height: 64px;
       box-shadow: 0 -4px 0 #000;
@@ -711,12 +879,13 @@ body {
   width: 100%;
   background: #000;
   color: #fff;
-  border: 2px solid #000;
+  border: 0;
   font-family: 'Anton', sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.5px;
-  padding: 7px 4px;
-  margin-top: 6px;
+  font-size: clamp(9px, 0.8vw, 11px);
+  letter-spacing: 1.6px;
+  line-height: 1;
+  padding: 9px 4px;
+  margin-top: 8px;
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
@@ -726,6 +895,166 @@ body {
 }
 .card-order-btn:active {
   background: #333;
+}
+
+/* ----- ADMIN: COVER PREVIEW ----- */
+.admin-cover-preview {
+  display: block;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-top: 10px;
+  padding: 6px;
+  border: 1px solid #000;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #e6e6e6 25%, transparent 25%),
+    linear-gradient(-45deg, #e6e6e6 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e6e6e6 75%),
+    linear-gradient(-45deg, transparent 75%, #e6e6e6 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.admin-hint {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #333;
+  margin: 8px 0 0;
+}
+
+/* ----- RESPONSIVE: TABLET / DESKTOP ----- */
+@media (min-width: 640px) {
+  .container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px 20px;
+  }
+
+  .screen-header {
+    font-size: 42px;
+  }
+
+  .archive-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .search-input,
+  .help-block,
+  .admin-form {
+    max-width: 760px;
+  }
+}
+
+@media (min-width: 900px) {
+  .container {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 32px 22px;
+  }
+
+  /* Детальная страница: фото слева, информация справа */
+  .detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'title title'
+      'gallery info';
+    column-gap: 40px;
+    row-gap: 14px;
+    align-items: start;
+    max-width: 1120px;
+    margin: 8px auto 0;
+  }
+
+  .detail-name {
+    grid-area: title;
+    margin: 0 0 4px;
+  }
+
+  .detail-gallery {
+    grid-area: gallery;
+    position: sticky;
+    top: calc(var(--header-h) + var(--header-safe) + 22px);
+  }
+
+  .detail-body {
+    grid-area: info;
+  }
+
+  .detail-carousel-slide {
+    aspect-ratio: 4 / 5;
+  }
+
+  .detail-carousel-slide img {
+    object-fit: contain;
+  }
+
+  .order-btn {
+    font-size: 18px;
+    padding: 16px 0;
+  }
+
+  .archive-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+
+  .bottom-nav {
+    gap: 10px;
+  }
+
+  .bottom-nav button {
+    flex: 0 1 280px;
+    margin: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 36px 24px;
+  }
+
+  .bottom-nav button {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+}
+
+/* ----- SMALL PHONES ----- */
+@media (max-width: 380px) {
+  .container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .product-grid {
+    gap: 18px 10px;
+  }
+
+  .product-name {
+    font-size: 10.5px;
+  }
+
+  .product-price {
+    font-size: 9.5px;
+  }
+
+  .card-order-btn {
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 8px 2px;
+  }
 }
 
 /* ----- ADMIN BUTTON: BOTTOM-RIGHT, NOT ON FIRST SCREEN ----- */

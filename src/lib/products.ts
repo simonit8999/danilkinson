@@ -42,6 +42,9 @@ export function normalizeProduct(raw: unknown, index: number): Product | null {
     ? formatPrice(data.price)
     : String(data.price ?? '').trim();
 
+  const coverRaw = typeof data.cover === 'string' ? data.cover.trim() : '';
+  const cover = coverRaw && isSafeImageUrl(coverRaw) ? coverRaw : undefined;
+
   const soldOut = data.soldOut === true
     || data.soldOut === 1
     || data.soldOut === 'true'
@@ -58,6 +61,7 @@ export function normalizeProduct(raw: unknown, index: number): Product | null {
     name,
     price,
     images: parseImages(data.images ?? data.image),
+    cover,
     description: String(data.description ?? data.desc ?? ''),
     soldOut,
     archived,

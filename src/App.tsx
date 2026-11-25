@@ -21,7 +21,11 @@ import { Detail } from './screens/Detail';
 import { Help } from './screens/Help';
 import { SearchScreen } from './screens/Search';
 
-const LOGO = 'https://i.postimg.cc/0NDs9xDf/u-a-top-Photoroom.png';
+const FALLBACK_LOGO = 'https://i.postimg.cc/0NDs9xDf/u-a-top-Photoroom.png';
+
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+const HEADER_IMAGE = asset('images/site/header-banner.jpg');
+const BACKGROUND_IMAGE = asset('images/site/site-bg.jpg');
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
 
@@ -113,11 +117,26 @@ function Shell() {
         </button>
       )}
 
-      <div className="container" ref={containerRef}>
-        <header className="app-header">
-          <img src={LOGO} alt="LOGO" onClick={onLogoTap} />
-        </header>
+      <div
+        className="app-bg"
+        aria-hidden="true"
+        style={{ backgroundImage: `url("${BACKGROUND_IMAGE}")` }}
+      />
 
+      <header className="app-header">
+        <img
+          src={HEADER_IMAGE}
+          alt="(undefined) archangel"
+          onClick={onLogoTap}
+          onError={(event) => {
+            if (event.currentTarget.dataset.fallback === '1') return;
+            event.currentTarget.dataset.fallback = '1';
+            event.currentTarget.src = FALLBACK_LOGO;
+          }}
+        />
+      </header>
+
+      <div className="container" ref={containerRef}>
         <ScrollToTop />
 
         <Routes>

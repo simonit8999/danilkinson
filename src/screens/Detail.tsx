@@ -28,41 +28,31 @@ export function Detail() {
 
   return (
     <div className="screen fade-in detail-screen">
-      <h1 className="screen-header" style={{ fontSize: 32, marginTop: 12 }}>
-        {product.name}
-      </h1>
+      <div className="detail-layout">
+        <h1 className="detail-name">{product.name}</h1>
 
-      <Carousel images={product.images} name={product.name} />
-
-      <div className="detail-price">{product.price}</div>
-
-      {product.soldOut && (
-        <div
-          style={{
-            marginTop: 12,
-            display: 'inline-block',
-            background: '#000',
-            color: '#fff',
-            fontFamily: "'Anton', sans-serif",
-            padding: '6px 18px',
-            letterSpacing: 2,
-          }}
-        >
-          SOLD OUT
+        <div className="detail-gallery">
+          <Carousel images={product.images} name={product.name} />
         </div>
-      )}
 
-      <div className="detail-description">{product.description}</div>
+        <div className="detail-body">
+          <div className="detail-price">{product.price}</div>
 
-      {product.soldOut ? (
-        <button className="order-btn" type="button" disabled>
-          SOLD OUT
-        </button>
-      ) : (
-        <button className="order-btn" type="button" onClick={() => setOrderOpen(true)}>
-          ОФОРМИТЬ ЗАКАЗ
-        </button>
-      )}
+          {product.soldOut && <div className="detail-soldout">SOLD OUT</div>}
+
+          <div className="detail-description">{product.description}</div>
+
+          {product.soldOut ? (
+            <button className="order-btn" type="button" disabled>
+              SOLD OUT
+            </button>
+          ) : (
+            <button className="order-btn" type="button" onClick={() => setOrderOpen(true)}>
+              BUY
+            </button>
+          )}
+        </div>
+      </div>
 
       {orderOpen && (
         <OrderModal product={product} onClose={() => setOrderOpen(false)} />
