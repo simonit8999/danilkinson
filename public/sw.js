@@ -1,10 +1,12 @@
-const CACHE = 'ua-pwa-v5';
+const CACHE = 'ua-pwa-v6';
 
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
   './data/products.json',
+  './images/site/header-wide.png',
+  './images/site/header-mobile.png',
   './images/site/header-banner.png',
   './images/site/site-bg.jpg',
   './icons/icon-32.png',

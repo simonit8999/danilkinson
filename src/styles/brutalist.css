@@ -13,8 +13,6 @@
       --photo-frame-color: #000000;
       --photo-frame-pad: 10px;
       --photo-frame-image: none;
-      /* Ширина верхней плашки на ПК (на телефоне плашка всегда на всю ширину) */
-      --header-max-width: 1200px;
     }
 
     html {
@@ -120,11 +118,18 @@
       z-index: 2;
     }
 
+    .app-header picture {
+      display: block;
+      width: 100%;
+    }
+
     .app-header img {
       display: block;
       width: 100%;
       height: auto;
-      max-height: clamp(64px, 22vw, 240px);
+      /* Телефон/планшет: плашка не выше 150px (на широком экране ПК — отдельная
+         широкая картинка, там высота и так ~110px). */
+      max-height: 150px;
       padding: 0;
       object-fit: contain;
       object-position: top center;
@@ -1100,14 +1105,6 @@ body::-webkit-scrollbar,
   width: 0;
   height: 0;
   display: none;
-}
-
-/* ----- TOP BANNER: на ПК плашка уже и по центру (телефон не меняется) ----- */
-@media (min-width: 900px) {
-  .app-header {
-    max-width: var(--header-max-width);
-    margin: 0 auto;
-  }
 }
 
 /* ----- DETAIL: КНОПКА НАЗАД В ПРЕДЫДУЩЕЕ МЕНЮ ----- */

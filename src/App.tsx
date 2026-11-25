@@ -23,7 +23,12 @@ import { SearchScreen } from './screens/Search';
 const FALLBACK_LOGO = 'https://i.postimg.cc/0NDs9xDf/u-a-top-Photoroom.png';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+// Плашка собрана из одной и той же картинки (scripts/make-header.ps1):
+// широкая и невысокая на ПК/планшете, компактная — на телефоне.
+const HEADER_WIDE = asset('images/site/header-wide.png');
+const HEADER_MOBILE = asset('images/site/header-mobile.png');
 const HEADER_IMAGE = asset('images/site/header-banner.png');
+const HEADER_DESKTOP_QUERY = '(min-width: 900px)';
 const BACKGROUND_IMAGE = asset('images/site/site-bg.jpg');
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
@@ -110,16 +115,29 @@ function Shell() {
 
       <div className="scroll-area" ref={containerRef}>
         <header className="app-header">
-          <img
-            src={HEADER_IMAGE}
-            alt="(undefined) archangel"
-            onClick={onLogoTap}
-            onError={(event) => {
-              if (event.currentTarget.dataset.fallback === '1') return;
-              event.currentTarget.dataset.fallback = '1';
-              event.currentTarget.src = FALLBACK_LOGO;
-            }}
-          />
+          <picture>
+            <source media={HEADER_DESKTOP_QUERY} srcSet={HEADER_WIDE} />
+            <img
+              src={HEADER_MOBILE}
+              alt="(undefined) archangel"
+              onClick={onLogoTap}
+              onError={(event) => {
+                const img = event.currentTarget;
+                const step = img.dataset.fallback ?? '0';
+
+                // 1) новая плашка не загрузилась — берём прежнюю целиком;
+                // 2) и она недоступна — запасной логотип.
+                if (step === '0') {
+                  img.dataset.fallback = '1';
+                  img.parentElement?.querySelectorAll('source').forEach((node) => node.remove());
+                  img.src = HEADER_IMAGE;
+                } else if (step === '1') {
+                  img.dataset.fallback = '2';
+                  img.src = FALLBACK_LOGO;
+                }
+              }}
+            />
+          </picture>
         </header>
 
         <div className="container">
