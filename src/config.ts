@@ -20,6 +20,6 @@ export const CONFIG = {
  *   node scripts/hash-admin.mjs <login> <password>
  */
 export const ADMIN_HASHES: readonly string[] = [
-  'd2cd7aeea3b7dd9188614b9577dedeef78ffe544b20575923ba135faebe750d4',
-  '4e008cfa8f8161f2c1ba396f96dc7437171bb09a442982377e5ac647fba9b233',
+  '152ce097e64400ffce38132dd2bab783dc3ed3373d67a1a3609aa1647074ca9d',
+  '6ee5e93de573b482ed8db2abd6d55fad15241b09caa49ed8fd86d29032a882ee',
 ];

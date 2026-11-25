@@ -24,7 +24,7 @@ import { SearchScreen } from './screens/Search';
 const FALLBACK_LOGO = 'https://i.postimg.cc/0NDs9xDf/u-a-top-Photoroom.png';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
-const HEADER_IMAGE = asset('images/site/header-banner.jpg');
+const HEADER_IMAGE = asset('images/site/header-banner.png');
 const BACKGROUND_IMAGE = asset('images/site/site-bg.jpg');
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
