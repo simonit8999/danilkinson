@@ -47,6 +47,7 @@ const TOKEN_TTL = 24 * 60 * 60 * 1000;
 const LOGIN_WINDOW = 5 * 60 * 1000;
 const LOGIN_LIMIT = 10;
 const BACKUPS_KEEP = 30;
+const API_VERSION = '2';
 
 const PLACEHOLDER = 'https://picsum.photos/id/100/600/600';
 
@@ -95,11 +96,57 @@ async function ensureStore() {
   }
 }
 
+async function readProductsFile(path) {
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8'));
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+async function readLatestBackup() {
+  try {
+    const files = (await readdir(BACKUPS))
+      .filter((name) => name.endsWith('.json'))
+      .sort()
+      .reverse();
+
+    for (const name of files) {
+      const products = await readProductsFile(join(BACKUPS, name));
+      if (products) return products;
+    }
+  } catch {
+    // бэкапов ещё нет
+  }
+
+  return null;
+}
+
+/**
+ * Каталог с диска. Битый/отсутствующий файл восстанавливаем: сначала последний
+ * бэкап, затем public/data/products.json. Функция не бросает исключений,
+ * чтобы /api/health и /api/catalog всегда отвечали.
+ */
 async function readStore() {
-  const products = JSON.parse(await readFile(STORE, 'utf8'));
-  if (!Array.isArray(products)) throw new Error('store must be an array');
-  const info = await stat(STORE);
-  return { products, updatedAt: info.mtime.toISOString() };
+  const products = await readProductsFile(STORE);
+
+  if (products) {
+    const info = await stat(STORE);
+    return { products, updatedAt: info.mtime.toISOString() };
+  }
+
+  const backup = await readLatestBackup();
+  const restored = backup ?? (await readProductsFile(SEED)) ?? [];
+
+  console.warn(
+    backup
+      ? '[server] store is unreadable: restored from backups'
+      : '[server] store is unreadable: restored from public/data/products.json',
+  );
+
+  await writeStore(restored).catch((error) => console.error('[server] cannot restore store', error));
+  return { products: restored, updatedAt: new Date().toISOString() };
 }
 
 async function pruneBackups() {
@@ -189,6 +236,8 @@ function cors(res) {
     'Content-Type, Authorization, ngrok-skip-browser-warning',
   );
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  // Кэшируем preflight на 10 минут: ngrok и браузер меньше дёргают OPTIONS.
+  res.setHeader('Access-Control-Max-Age', '600');
 }
 
 function sendJson(res, code, data) {
@@ -257,6 +306,10 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
   const { pathname } = url;
 
+  if (pathname.startsWith('/api/')) {
+    console.log(`[api] ${req.method} ${pathname}`);
+  }
+
   try {
     if (req.method === 'OPTIONS') {
       cors(res);
@@ -267,12 +320,20 @@ const server = createServer(async (req, res) => {
 
     if (pathname === '/api/health') {
       cors(res);
-      const { updatedAt } = await readStore();
-      sendJson(res, 200, { ok: true, updatedAt });
+      const { products, updatedAt } = await readStore();
+      sendJson(res, 200, {
+        ok: true,
+        version: API_VERSION,
+        count: products.length,
+        updatedAt,
+      });
       return;
     }
 
-    if (pathname === '/api/catalog' && req.method === 'GET') {
+    // /api/products — алиас /api/catalog для старых версий клиента.
+    const isCatalog = pathname === '/api/catalog' || pathname === '/api/products';
+
+    if (isCatalog && req.method === 'GET') {
       cors(res);
       const { products, updatedAt } = await readStore();
       sendJson(res, 200, { products, updatedAt });
@@ -318,7 +379,7 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    if (pathname === '/api/catalog' && req.method === 'PUT') {
+    if (isCatalog && req.method === 'PUT') {
       cors(res);
       const header = req.headers.authorization ?? '';
       const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
@@ -351,6 +412,15 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // Неизвестный /api/* обязан отвечать JSON-ом. Раньше сюда попадал
+    // SPA-fallback (index.html со статусом 200), и клиент считал сервер живым,
+    // но получал HTML вместо данных.
+    if (pathname.startsWith('/api/')) {
+      cors(res);
+      sendJson(res, 404, { error: 'NOT_FOUND', path: pathname });
+      return;
+    }
+
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       sendJson(res, 405, { error: 'METHOD_NOT_ALLOWED' });
       return;
@@ -367,6 +437,35 @@ const server = createServer(async (req, res) => {
   }
 });
 
+/**
+ * Если ngrok уже запущен — показываем актуальный публичный адрес.
+ * Его вставляют в админке в поле API BASE, когда сайт открыт не с сервера
+ * (например с GitHub Pages), чтобы не пересобирать проект.
+ */
+async function logPublicUrl(attempts = 6) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch('http://127.0.0.1:4040/api/tunnels', {
+        signal: AbortSignal.timeout(2000),
+      });
+      const data = await response.json();
+      const tunnels = Array.isArray(data?.tunnels) ? data.tunnels : [];
+      const https = tunnels.find((item) => String(item.public_url ?? '').startsWith('https://'));
+      const publicUrl = https?.public_url ?? tunnels[0]?.public_url;
+
+      if (publicUrl) {
+        console.log(`[server] tunnel url: ${publicUrl}`);
+        console.log('[server] admin -> API BASE: paste this url if the site is opened on GitHub Pages');
+        return;
+      }
+    } catch {
+      // ngrok ещё не поднялся — попробуем через 5 секунд
+    }
+
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 5000));
+  }
+}
+
 await ensureStore();
 
 if (!(await isFile(join(DIST, 'index.html')))) {
@@ -376,4 +475,5 @@ if (!(await isFile(join(DIST, 'index.html')))) {
 server.listen(PORT, HOST, () => {
   console.log(`[server] catalog + site: http://${HOST}:${PORT}`);
   console.log('[server] tunnel: npm run tunnel  (ngrok http 127.0.0.1:3000)');
+  void logPublicUrl();
 });

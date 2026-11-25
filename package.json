@@ -9,10 +9,13 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "server": "node server/index.mjs",
+    "start": "npm run build && npm run server",
     "tunnel": "ngrok http 127.0.0.1:3000",
     "publish": "node server/publish.mjs",
     "hash-admin": "node scripts/hash-admin.mjs",
-    "icons": "powershell -ExecutionPolicy Bypass -File scripts/make-icons.ps1"
+    "icons": "powershell -ExecutionPolicy Bypass -File scripts/make-icons.ps1",
+    "check": "node scripts/api-check.mjs",
+    "tap-check": "node scripts/tap-check.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

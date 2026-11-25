@@ -1,4 +1,4 @@
-const CACHE = 'ua-pwa-v4';
+const CACHE = 'ua-pwa-v5';
 
 const SHELL = [
   './',
@@ -7,8 +7,12 @@ const SHELL = [
   './data/products.json',
   './images/site/header-banner.png',
   './images/site/site-bg.jpg',
+  './icons/icon-32.png',
+  './icons/icon-48.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/maskable-512.png',
+  './icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {

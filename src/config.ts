@@ -15,6 +15,7 @@ export const CONFIG = {
     adminEntry: 'ua_admin_entry_v1',
     adminSession: 'ua_admin_session_v1',
     serverToken: 'ua_server_token_v1',
+    apiBase: 'ua_api_base_v1',
   },
   adminSessionTtlMs: 12 * 60 * 60 * 1000,
 } as const;

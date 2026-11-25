@@ -22,7 +22,7 @@ src/                     исходники приложения
   components/            карточка товара, карусель, модалка заказа, полноэкранное фото
   context/               AdminContext, CatalogContext
   screens/               Catalog, Detail, Search, Archive, Help, AdminPanel
-  lib/                   auth, clipboard, order, products, storage
+  lib/                   auth, api, apiBase, clipboard, order, products, storage
   data/seed.ts           резервный каталог (если products.json не загрузился)
   styles/brutalist.css   все стили
 public/                  копируется в сборку как есть
@@ -31,8 +31,9 @@ public/                  копируется в сборку как есть
   images/products/       сюда кладутся фото товаров
   manifest.json          PWA manifest
   sw.js                  service worker
-  icons/                 иконки PWA
-scripts/                 вспомогательные скрипты (в сборку не попадают)
+  icons/                 иконки PWA/Apple/вкладки (генерируются из аватарки)
+scripts/                 вспомогательные скрипты (в сборку не попадают):
+                         make-icons.ps1 (иконки), api-check.mjs (проверка сервера)
 server/                  локальный сервер каталога (статика dist + API) и publish.mjs
 shared/admin-hashes.json хеши админов: читают и сайт, и сервер
 .env.example             PORT / HOST / VITE_API_URL
@@ -48,6 +49,8 @@ npm run build      # tsc --noEmit + vite build -> dist/
 npm run preview    # локальный просмотр собранной версии http://localhost:4173
 npm run typecheck  # только проверка типов
 npm run server     # локальный сервер каталога + сайта: http://127.0.0.1:3000
+npm run start      # build + server одной командой
+npm run check      # проверка API сервера (health, catalog, preflight)
 npm run tunnel     # ngrok http 3000 (доступ из интернета)
 npm run publish    # server/data/products.json -> public/data/products.json
 ```
@@ -101,13 +104,13 @@ npm run publish    # server/data/products.json -> public/data/products.json
 
 ## Админка
 
-Как войти:
+Как войти (единственный способ):
 
-1. Откройте сайт и в течение ~0,9 секунды **трижды тапните по верхней плашке**.
-   Откроется экран `ADMIN`.
-2. Либо добавьте в адрес `?admin=1`, например: `https://САЙТ/?admin=1#/admin`.
-3. Введите логин и пароль, под которые сгенерированы хеши в `src/config.ts`.
-   После входа и прокрутки внизу справа появляется кнопка `[ ADMIN ]`.
+1. Откройте сайт и **трижды нажмите по верхней плашке** (интервал между нажатиями
+   не больше ~0,9 секунды). Откроется экран `ADMIN` со входом.
+2. Введите логин и пароль, под которые сгенерированы хеши в `shared/admin-hashes.json`.
+3. Никакой плавающей кнопки `[ ADMIN ]` нет: чтобы вернуться в кабинет, снова
+   трижды нажмите по верхней плашке. Флаг доступа живёт до закрытия вкладки.
 4. Вход работает только на HTTPS или `localhost` (нужен `crypto.subtle`).
 
 Смена логина/пароля:
@@ -116,7 +119,8 @@ npm run publish    # server/data/products.json -> public/data/products.json
 npm run hash-admin -- <login> <password>
 ```
 
-Полученный хеш вставьте в `ADMIN_HASHES` в `src/config.ts` и пересоберите сайт.
+Полученный хеш вставьте в `shared/admin-hashes.json` (массив строк) и пересоберите сайт.
+Этот же файл читает сервер, поэтому доступ появится и в локальной админке.
 Плейнтекстовых паролей в репозитории нет.
 
 Публикация изменений:
@@ -139,10 +143,14 @@ npm run hash-admin -- <login> <password>
    В панели ngrok можно взять бесплатный статический домен, чтобы ссылка не менялась:
    `ngrok http --url=ваш-домен.ngrok-free.dev 127.0.0.1:3000`.
 4. Отправьте клиенту ссылку туннеля. Вход в админку — тройной тап по верхней плашке
-   или `?admin=1`, логин/пароль те же (список хешей в `shared/admin-hashes.json`).
+   (логин/пароль те же, список хешей в `shared/admin-hashes.json`).
 5. Любая правка в админке уходит на сервер через `PUT /api/catalog` (автосохранение
    с задержкой ~0,7 с, кнопка `PUBLISH NOW` — сразу). Статус виден в админке:
    `SERVER: ONLINE · SYNC: SAVED`, дата публикации.
+6. Если сайт открыт не с сервера (например с GitHub Pages), адрес API задаётся прямо
+   в админке: поле **API BASE** → вставьте ссылку туннеля → `SAVE API`. Пересобирать
+   сайт не нужно. Адрес запоминается в браузере; `RESET API` возвращает адрес из сборки.
+   То же самое можно передать ссылкой: `https://САЙТ/?api=https://ДОМЕН.ngrok-free.dev`.
 
 Добавить отдельный доступ клиенту (и отозвать его удалением строки из JSON):
 
@@ -176,32 +184,47 @@ npm run publish     # копирует server/data/products.json в public/data/
 1. Запущен ли сервер: `npm.cmd run server` или `start-server.cmd`. Окно с
    `[server] catalog + site: http://127.0.0.1:3000` должно быть открыто.
    ngrok без сервера пробрасывает «в пустоту» — сайт откроется, API будет падать.
-2. Посмотрите в плашке строку `API: ...` — это адрес, куда клиент реально шлёт
-   `/api/*`. Если там адрес GitHub Pages (`https://USER.github.io/REPO`), значит
-   сайт открыт не с сервера: API на Pages нет (404), плашка всегда будет `OFFLINE`.
-   Админку открывайте по ссылке туннеля: `https://ВАШ-ДОМЕН.ngrok-free.dev/?admin=1#/admin`.
-3. Проверка API: `http://127.0.0.1:3000/api/health` → `{"ok":true,...}`.
-   Через туннель: `https://ВАШ-ДОМЕН.ngrok-free.dev/api/health`.
-4. Порт 3000 занят другим процессом — сервер не стартует, в консоли `EADDRINUSE`:
+2. Одна команда для проверки всего API: `npm.cmd run check` (или
+   `npm.cmd run check -- https://ВАШ-ДОМЕН.ngrok-free.dev`). Все строки должны быть `OK`:
+   `GET /api/health`, `GET /api/catalog`, `GET /api/products`, `OPTIONS preflight`.
+3. Посмотрите в плашке строку `API: ...` — это адрес, куда клиент реально шлёт
+   `/api/*`. Если там адрес GitHub Pages (`https://USER.github.io`), значит сайт
+   открыт не с сервера: API на Pages нет. Решение — поле **API BASE** в админке:
+   вставьте ссылку туннеля и нажмите `SAVE API` (пересборка не нужна), либо
+   откройте сам сайт по ссылке туннеля.
+4. Сервер печатает актуальный адрес туннеля при старте:
+   `[server] tunnel url: https://...ngrok-free.dev`. Если ngrok запущен позже сервера,
+   адрес там не появится — возьмите его из окна ngrok или из `http://127.0.0.1:4040/api/tunnels`.
+5. Бесплатный домен ngrok меняется при каждом перезапуске. Чтобы ссылка не менялась,
+   возьмите статический домен в панели ngrok и запускайте
+   `ngrok http --url=ВАШ-ДОМЕН.ngrok-free.dev 127.0.0.1:3000`.
+6. Порт 3000 занят другим процессом — сервер не стартует, в консоли `EADDRINUSE`:
    `Get-NetTCPConnection -LocalPort 3000 -State Listen`.
-5. Сайт открыт не с сервера (например GitHub Pages): тогда нужен
-   `VITE_API_URL=https://ВАШ-ДОМЕН.ngrok-free.dev` при сборке (см. раздел
-   «Админка на GitHub Pages») и пересборка.
-6. После запуска сервера страницу перезагружать не обязательно: клиент сам
+7. После запуска сервера страницу перезагружать не обязательно: клиент сам
    опрашивает API каждые 15 секунд и возвращает статус в `ONLINE`.
-   `SYNC: LOCAL ONLY` при живом сервере означает, что нет токена — войдите в админку заново.
+8. `SYNC: LOCAL ONLY` при живом сервере означает, что нет токена (сервер
+   перезапускали) — нажмите `LOGOUT` и войдите заново.
 
 ## Иконки приложения
 
-Иконки PWA и `apple-touch-icon` лежат в `public/icons/` и генерируются из одной картинки:
+Все иконки (`public/icons/`) генерируются из одной картинки — аватарки:
 
 ```
-npm.cmd run icons -- -Source public\icons\avatar.png
+npm.cmd run icons                        # берёт avatar.jpg из корня проекта
+npm.cmd run icons -- -Source avatar.jpg  # или явно указать файл
 ```
 
-Без `-Source` скрипт берёт `public/icons/avatar.png` (или `avatar.jpg`), а если их нет —
-скачивает логотип по умолчанию. После замены иконок поднимите версию кэша в
-`public/sw.js` (`ua-pwa-v4` → `ua-pwa-v5`) и пересоберите сайт (`npm.cmd run build`).
+Скрипт создаёт:
+
+- `icon-32.png`, `icon-48.png` — иконка вкладки браузера (Chrome, Safari, Edge и др.);
+- `icon-192.png`, `icon-512.png` — установка приложения на телефон (Android/Chrome);
+- `maskable-512.png` — иконка для Android с безопасными отступами;
+- `apple-touch-icon.png` — ярлык на iPhone/iPad.
+
+Картинка вписывается в белый квадрат с отступами (для favicon отступ минимальный).
+После замены иконок поднимите версию кэша в `public/sw.js` (`ua-pwa-v5` → `ua-pwa-v6`)
+и пересоберите сайт (`npm.cmd run build`), иначе браузер покажет старую иконку из кэша.
+Верхняя плашка сайта (`public/images/site/header-banner.png`) при этом не меняется.
 
 ## Заказы
 
@@ -224,15 +247,16 @@ npm.cmd run icons -- -Source public\icons\avatar.png
 
 ### Админка на GitHub Pages
 
-На Pages нет `/api/*`, поэтому админка там по умолчанию работает только локально
-(`SERVER: OFFLINE · SYNC: LOCAL ONLY`). Чтобы она сохраняла правки на ваш сервер:
+На Pages нет `/api/*`. Два способа связать админку с сервером:
 
-1. Settings → Secrets and variables → Actions → **Variables** → New repository variable:
-   `VITE_API_URL` = `https://ВАШ-ДОМЕН.ngrok-free.dev` (без слэша в конце).
-2. Перезапустите workflow (push или Actions → Run workflow) — сборка подставит адрес.
-3. Оставьте туннель и сервер включёнными. Домен ngrok не должен меняться —
-   используйте статический: `ngrok http --url=ВАШ-ДОМЕН.ngrok-free.dev 127.0.0.1:3000`.
-   Если домен сменился — обновите переменную и пересоберите сайт.
+1. Быстро, без пересборки: открыть админку (три нажатия по верхней плашке), в поле
+   **API BASE** вставить ссылку туннеля и нажать `SAVE API`. Адрес запоминается в
+   браузере. Ссылку можно передать сразу в адресе: `https://САЙТ/?api=https://ДОМЕН.ngrok-free.dev`.
+2. Через сборку: Settings → Secrets and variables → Actions → **Variables** →
+   New repository variable `VITE_API_URL` = `https://ВАШ-ДОМЕН.ngrok-free.dev`
+   (без слэша в конце), затем перезапустить workflow. Сборка подставит адрес по умолчанию.
+   Домен ngrok при этом не должен меняться — используйте статический:
+   `ngrok http --url=ВАШ-ДОМЕН.ngrok-free.dev 127.0.0.1:3000`.
 
 Правки, сделанные в браузере на одном origin, не видны на другом (localStorage
 привязан к домену). Переносите их через `EXPORT JSON` → `IMPORT JSON`.
@@ -248,6 +272,12 @@ reporting a Pages outage?` — это сбой на стороне GitHub, ко�
 
 ## Тесты (необязательно)
 
+`scripts/api-check.mjs` — проверка сервера без браузера: `npm.cmd run check`.
+
+`scripts/tap-check.mjs` — проверка входа без зависимостей (headless Chrome/Edge + CDP):
+`npm.cmd run tap-check`. Убеждается, что кнопки `[ ADMIN ]` нет в DOM, одно нажатие
+по верхней плашке кабинет не открывает, а три открывают экран входа.
+
 `scripts/smoke2.mjs` — smoke-прогон в headless Chrome/Edge через `playwright-core`.
 Он не входит в зависимости сборки; для запуска:
 
@@ -258,10 +288,13 @@ npm i -D playwright-core
 node scripts/smoke2.mjs
 ```
 
+Сценарии админки используют тройное нажатие по верхней плашке; для проверки входа
+нужен пароль в переменной `ADMIN1_PASS`.
+
 ## Ограничения
 
 - Бронирование не синхронизируется между устройствами: статус ставит админ.
 - Без запущенного сервера правки в админке приватны (localStorage на устройстве);
   с сервером они сразу видны всем, кто открыл ссылку туннеля.
 - Персональные Open Graph превью для товаров требуют SSR и здесь недоступны.
-- Имя кэша service worker — `ua-pwa-v4`; поднимите версию в `public/sw.js` после изменений логики кэша.
+- Имя кэша service worker — `ua-pwa-v5`; поднимите версию в `public/sw.js` после изменений логики кэша.

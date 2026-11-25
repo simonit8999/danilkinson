@@ -1,8 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CONFIG } from '../config';
 import { useAdmin } from '../context/AdminContext';
 import { useCatalog } from '../context/CatalogContext';
+import { pingServer } from '../lib/api';
 import { copyText } from '../lib/clipboard';
 import type { Product } from '../types';
 
@@ -64,13 +64,44 @@ export default function AdminPanel() {
     sync,
     serverOnline,
     serverUpdatedAt,
+    apiBase,
+    applyApiBase,
     publishNow,
     reloadFromServer,
   } = useCatalog();
 
-  // Куда клиент реально отправляет /api/*. Пусто в CONFIG.apiBase = тот же origin,
-  // поэтому на GitHub Pages (без VITE_API_URL) API там нет — плашка покажет OFFLINE.
-  const apiOrigin = CONFIG.apiBase || window.location.origin;
+  // Куда клиент реально отправляет /api/*. Пусто в поле = тот же origin,
+  // поэтому на GitHub Pages (без адреса туннеля) API там нет — плашка покажет OFFLINE.
+  const apiOrigin = apiBase || window.location.origin;
+
+  const [apiDraft, setApiDraft] = useState(apiBase);
+  const [apiNotice, setApiNotice] = useState('');
+
+  useEffect(() => {
+    setApiDraft(apiBase);
+  }, [apiBase]);
+
+  const testApi = async () => {
+    setApiNotice('ПРОВЕРЯЕМ СЕРВЕР...');
+    const ok = await pingServer(apiDraft);
+    setApiNotice(ok ? 'СЕРВЕР ОТВЕЧАЕТ.' : 'СЕРВЕР НЕ ОТВЕЧАЕТ ПО ЭТОМУ АДРЕСУ.');
+  };
+
+  const saveApi = async () => {
+    setApiNotice('ПОДКЛЮЧАЕМСЯ...');
+    const ok = await applyApiBase(apiDraft);
+    setApiNotice(ok
+      ? 'API СОХРАНЁН: СЕРВЕР ОТВЕЧАЕТ.'
+      : 'СЕРВЕР НЕ ОТВЕЧАЕТ. ССЫЛКА NGROK МЕНЯЕТСЯ ПРИ КАЖДОМ ЗАПУСКЕ — ВОЗЬМИТЕ АКТУАЛЬНУЮ.');
+  };
+
+  const resetApi = async () => {
+    setApiDraft('');
+    const ok = await applyApiBase('');
+    setApiNotice(ok
+      ? 'АДРЕС СБРОШЕН: РАБОТАЕМ С ТЕМ ЖЕ ORIGIN, СЕРВЕР ОТВЕЧАЕТ.'
+      : 'АДРЕС СБРОШЕН, НО ПО ТЕКУЩЕМУ ORIGIN СЕРВЕРА НЕТ.');
+  };
 
   const [loginValue, setLoginValue] = useState('');
   const [password, setPassword] = useState('');
@@ -260,11 +291,6 @@ export default function AdminPanel() {
 
   const onLogout = () => {
     logout();
-
-    const url = new URL(window.location.href);
-    url.searchParams.delete('admin');
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-
     navigate('/');
   };
 
@@ -281,12 +307,48 @@ export default function AdminPanel() {
         )}
       </div>
 
+      <div className="admin-api">
+        <label htmlFor="admin-api-base">API BASE · АДРЕС СЕРВЕРА / ТУННЕЛЯ</label>
+        <input
+          id="admin-api-base"
+          type="text"
+          value={apiDraft}
+          onChange={(event) => setApiDraft(event.target.value)}
+          placeholder="https://ваш-домен.ngrok-free.dev"
+          autoComplete="off"
+          spellCheck={false}
+        />
+
+        <div className="admin-actions">
+          <button type="button" onClick={() => void testApi()}>TEST</button>
+          <button type="button" onClick={() => void saveApi()}>SAVE API</button>
+          <button type="button" onClick={() => void resetApi()}>RESET API</button>
+        </div>
+
+        <p className="admin-hint">
+          Пусто = тот же адрес, что у сайта (открыт с сервера или по ссылке туннеля).
+          Если сайт открыт на GitHub Pages — вставьте ссылку туннеля ngrok и нажмите
+          SAVE API: пересобирать сайт не нужно.
+        </p>
+
+        {apiNotice && <p className="admin-hint">{apiNotice}</p>}
+      </div>
+
       {!loading && !serverOnline && (
         <div className="help-block">
           <p>
             СЕРВЕР НЕ ОТВЕЧАЕТ ПО АДРЕСУ {apiOrigin}. ПРАВКИ ОСТАЮТСЯ В ЭТОМ БРАУЗЕРЕ
-            (LOCAL ONLY). ОТКРОЙТЕ САЙТ ПО ССЫЛКЕ ТУННЕЛЯ NGROK, А НЕ С GITHUB PAGES,
-            ИЛИ ЗАДАЙТЕ VITE_API_URL ПРИ СБОРКЕ.
+            (LOCAL ONLY). ВСТАВЬТЕ В ПОЛЕ API BASE АКТУАЛЬНУЮ ССЫЛКУ ТУННЕЛЯ NGROK
+            И НАЖМИТЕ SAVE API (ИЛИ ОТКРОЙТЕ САМ САЙТ ПО ССЫЛКЕ ТУННЕЛЯ).
+          </p>
+        </div>
+      )}
+
+      {!loading && serverOnline && sync === 'offline' && (
+        <div className="help-block">
+          <p>
+            СЕРВЕР ОНЛАЙН, НО ТОКЕН НЕДЕЙСТВИТЕЛЕН (СЕРВЕР ПЕРЕЗАПУСКАЛИ).
+            НАЖМИТЕ LOGOUT И ВОЙДИТЕ ЗАНОВО.
           </p>
         </div>
       )}

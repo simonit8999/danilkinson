@@ -107,29 +107,6 @@
       animation: fadeIn 0.2s ease-in-out;
     }
 
-    /* ----- ADMIN BUTTON (top-right, no overlap) ----- */
-    #adminBtn {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 1000;
-      background: #000;
-      color: #fff;
-      border: 2px solid #000;
-      padding: 8px 16px;
-      font-family: 'Anton', sans-serif;
-      font-size: 14px;
-      letter-spacing: 1px;
-      cursor: pointer;
-      text-transform: uppercase;
-      box-shadow: 3px 3px 0 #000;
-      transition: none;
-    }
-
-    #adminBtn:hover {
-      background: #222;
-    }
-
     /* ----- TOP BANNER (full width, в потоке: уезжает при скролле) ----- */
     .app-header {
       position: relative;
@@ -939,6 +916,37 @@ body {
   border-style: dashed;
 }
 
+/* ----- ADMIN: API BASE (адрес сервера/туннеля меняется без пересборки) ----- */
+.admin-api {
+  border: 3px dashed #000;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.admin-api label {
+  display: block;
+  font-family: 'Anton', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.admin-api input {
+  width: 100%;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  border: 3px solid #000;
+  padding: 10px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.admin-api .admin-hint {
+  margin: 8px 0 0;
+}
+
 /* ----- RESPONSIVE: TABLET / DESKTOP ----- */
 @media (min-width: 640px) {
   .container {
@@ -1070,16 +1078,6 @@ body {
     letter-spacing: 1px;
     padding: 8px 2px;
   }
-}
-
-/* ----- ADMIN BUTTON: BOTTOM-RIGHT, NOT ON FIRST SCREEN ----- */
-#adminBtn {
-  top: auto;
-  bottom: calc(76px + env(safe-area-inset-bottom));
-  right: 8px;
-  font-size: 10px;
-  padding: 5px 8px;
-  opacity: 0.85;
 }
 
 /* ----- HIDDEN SCROLLBARS: прокрутка работает, полос не видно ----- */

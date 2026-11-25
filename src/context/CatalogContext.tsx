@@ -11,8 +11,9 @@ import {
 import { CONFIG } from '../config';
 import { seedProducts } from '../data/seed';
 import { fetchRemoteCatalog, putRemoteCatalog } from '../lib/api';
+import { detectApiBaseParam, readApiBase, saveApiBase } from '../lib/apiBase';
 import { hashString, newProductId, normalizeProducts } from '../lib/products';
-import { readJson, removeKey, sessionGet, writeJson } from '../lib/storage';
+import { readJson, removeKey, sessionGet, sessionRemove, writeJson } from '../lib/storage';
 import type { Product } from '../types';
 
 interface LocalCatalog {
@@ -33,6 +34,9 @@ interface CatalogApi {
   sync: SyncState;
   serverOnline: boolean;
   serverUpdatedAt: string | null;
+  /** Адрес API: пусто = тот же origin (сайт открыт с сервера/туннеля). */
+  apiBase: string;
+  applyApiBase: (value: string) => Promise<boolean>;
   saveProduct: (input: Omit<Product, 'id'>, id?: string) => void;
   deleteProduct: (id: string) => void;
   archiveProduct: (id: string) => void;
@@ -92,6 +96,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [sync, setSync] = useState<SyncState>('idle');
   const [serverOnline, setServerOnline] = useState(false);
   const [serverUpdatedAt, setServerUpdatedAt] = useState<string | null>(null);
+  const [apiBase, setApiBase] = useState<string>(() => readApiBase());
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Значения для фоновой проверки сервера: чтобы интервал не пересоздавался.
@@ -128,6 +133,15 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       writeJson(CONFIG.storage.catalog, { baseHash: hash, products: next });
     } catch (error) {
       console.warn('[catalog] publish failed', error);
+
+      // Сервер перезапускали: старый токен больше не принимается.
+      // Сбрасываем его, чтобы админка показала «войдите заново», а не SAVE FAILED.
+      if ((error as { status?: number }).status === 401) {
+        sessionRemove(CONFIG.storage.serverToken);
+        setSync('offline');
+        return;
+      }
+
       setSync('error');
     }
   }, []);
@@ -148,6 +162,10 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     let alive = true;
 
     (async () => {
+      // ?api=https://... — адрес туннеля можно передать ссылкой.
+      const override = detectApiBaseParam();
+      if (override) setApiBase(override);
+
       const remote = await fetchRemoteCatalog();
       if (!alive) return;
 
@@ -303,6 +321,40 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
 
   const exportJson = useCallback(() => JSON.stringify(products, null, 2), [products]);
 
+  /**
+   * Смена адреса API без пересборки сайта: сохраняем адрес и сразу проверяем
+   * сервер. Возвращает true, если сервер ответил.
+   */
+  const applyApiBase = useCallback(async (value: string) => {
+    const next = saveApiBase(value);
+    setApiBase(next);
+    setSync('idle');
+
+    const remote = await fetchRemoteCatalog();
+    if (!remote) {
+      setServerOnline(false);
+      setSync('offline');
+      return false;
+    }
+
+    if (remote.updatedAt) setServerUpdatedAt(remote.updatedAt);
+
+    const list = normalizeProducts(remote.products);
+    const hash = hashString(JSON.stringify(list));
+
+    setServerOnline(true);
+    setSync('idle');
+
+    // Локальные правки не перетираем: их отправит PUBLISH NOW.
+    if (dirtyRef.current || readLocal()) return true;
+
+    setProducts(list);
+    setPublished(list);
+    setPublishedHash(hash);
+    setStale(false);
+    return true;
+  }, []);
+
   const importJson = useCallback((text: string) => {
     const parsed = JSON.parse(text) as unknown;
     const next = normalizeProducts(parsed);
@@ -339,6 +391,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     sync,
     serverOnline,
     serverUpdatedAt,
+    apiBase,
+    applyApiBase,
     saveProduct,
     deleteProduct,
     archiveProduct,
@@ -359,6 +413,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     sync,
     serverOnline,
     serverUpdatedAt,
+    apiBase,
+    applyApiBase,
     saveProduct,
     deleteProduct,
     archiveProduct,

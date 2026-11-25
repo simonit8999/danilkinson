@@ -3,7 +3,6 @@ import {
   Suspense,
   useEffect,
   useRef,
-  useState,
 } from 'react';
 import {
   HashRouter,
@@ -28,6 +27,10 @@ const HEADER_IMAGE = asset('images/site/header-banner.png');
 const BACKGROUND_IMAGE = asset('images/site/site-bg.jpg');
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
+
+// Вход в кабинет: три нажатия по верхней плашке подряд (интервал между нажатиями).
+const ADMIN_TAP_COUNT = 3;
+const ADMIN_TAP_INTERVAL_MS = 900;
 
 function AdminRoute() {
   const { entry, authenticated } = useAdmin();
@@ -63,35 +66,21 @@ function ScrollToTop() {
 function Shell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { entry, authenticated, grantEntry } = useAdmin();
+  const { grantEntry } = useAdmin();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const taps = useRef({ count: 0, last: 0 });
-  const [scrolled, setScrolled] = useState(false);
 
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-
-    const onScroll = () => {
-      const header = element.querySelector('.app-header');
-      const threshold = header instanceof HTMLElement ? header.offsetHeight : 80;
-      setScrolled(element.scrollTop > threshold);
-    };
-    element.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    return () => element.removeEventListener('scroll', onScroll);
-  }, []);
-
+  // Единственный вход в кабинет: три нажатия подряд по верхней плашке.
+  // Плавающей кнопки [ ADMIN ] нет вообще — ни до входа, ни после.
   const onLogoTap = () => {
     const now = Date.now();
-    if (now - taps.current.last > 900) taps.current.count = 0;
+    if (now - taps.current.last > ADMIN_TAP_INTERVAL_MS) taps.current.count = 0;
 
     taps.current.last = now;
     taps.current.count += 1;
 
-    if (taps.current.count >= 3) {
+    if (taps.current.count >= ADMIN_TAP_COUNT) {
       taps.current.count = 0;
       grantEntry();
       navigate('/admin');
@@ -109,18 +98,10 @@ function Shell() {
           ? 'help'
           : '';
 
-  // Кнопка не только скрыта, но и вообще не рендерится в DOM,
-  // пока нет доступа и пользователь не прокрутил первый экран.
-  const showAdminButton = (entry || authenticated) && scrolled;
-
+  // Плавающая кнопка [ ADMIN ] удалена: в кабинет входят только тройным
+  // нажатием по верхней плашке.
   return (
     <>
-      {showAdminButton && (
-        <button id="adminBtn" type="button" onClick={() => navigate('/admin')}>
-          [ ADMIN ]
-        </button>
-      )}
-
       <div
         className="app-bg"
         aria-hidden="true"

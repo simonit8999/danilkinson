@@ -6,9 +6,10 @@ param(
 # Иконки PWA/Apple генерируются из одной картинки: вписываем по пропорциям
 # в белый квадрат с отступами (padding).
 #
-# Запуск с локальным файлом (новый логотип/аватарка):
-#   powershell -ExecutionPolicy Bypass -File scripts\make-icons.ps1 -Source public\icons\avatar.png
-# Без -Source берётся public\icons\avatar.png | avatar.jpg, иначе скачивается логотип по умолчанию.
+# Запуск с локальным файлом (новая аватарка):
+#   powershell -ExecutionPolicy Bypass -File scripts\make-icons.ps1 -Source avatar.jpg
+# Без -Source скрипт берёт public\icons\avatar.png | avatar.jpg, затем avatar.*
+# в корне проекта, иначе скачивает логотип по умолчанию.
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -22,8 +23,18 @@ $tmp = Join-Path $env:TEMP 'ua-logo.png'
 $downloaded = $false
 
 if (-not $Source) {
-  foreach ($name in 'avatar.png', 'avatar.jpg', 'avatar.jpeg', 'source.png', 'source.jpg') {
-    $candidate = Join-Path $icons $name
+  $candidates = @(
+    (Join-Path $icons 'avatar.png'),
+    (Join-Path $icons 'avatar.jpg'),
+    (Join-Path $icons 'avatar.jpeg'),
+    (Join-Path $root 'avatar.png'),
+    (Join-Path $root 'avatar.jpg'),
+    (Join-Path $root 'avatar.jpeg'),
+    (Join-Path $icons 'source.png'),
+    (Join-Path $icons 'source.jpg')
+  )
+
+  foreach ($candidate in $candidates) {
     if (Test-Path -LiteralPath $candidate) {
       $Source = $candidate
       break
@@ -64,6 +75,8 @@ function New-Icon([string]$Source, [int]$Size, [string]$Out, [double]$Padding) {
   $image.Dispose()
 }
 
+New-Icon $Source 32 (Join-Path $icons 'icon-32.png') 0.04
+New-Icon $Source 48 (Join-Path $icons 'icon-48.png') 0.04
 New-Icon $Source 192 (Join-Path $icons 'icon-192.png') 0.08
 New-Icon $Source 512 (Join-Path $icons 'icon-512.png') 0.08
 New-Icon $Source 512 (Join-Path $icons 'maskable-512.png') 0.20

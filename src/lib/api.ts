@@ -1,7 +1,9 @@
-import { CONFIG } from '../config';
 import type { Product } from '../types';
+import { normalizeApiBase, readApiBase } from './apiBase';
 
-const withBase = (path: string) => `${CONFIG.apiBase}${path}`;
+// Адрес вычисляется на каждый запрос: его можно поменять из админки
+// (поле API BASE), не пересобирая сайт.
+const withBase = (path: string) => `${readApiBase()}${path}`;
 
 const NO_CACHE = { 'ngrok-skip-browser-warning': '1' } as const;
 
@@ -28,6 +30,25 @@ async function request(
 export interface RemoteCatalog {
   products: unknown;
   updatedAt?: string;
+}
+
+/** Сервер отвечает? Используется кнопкой TEST в админке. */
+export async function pingServer(base: string, timeoutMs = 6000): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${normalizeApiBase(base)}/api/health`, {
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: NO_CACHE,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Каталог с сервера. null — сервер недоступен (сайт работает в локальном режиме). */
@@ -75,7 +96,12 @@ export async function putRemoteCatalog(
     body: JSON.stringify(products),
   }, 12000);
 
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) {
+    // status нужен вызывающему коду: 401 = сервер перезапускали, токен протух.
+    const error = new Error(`HTTP ${response.status}`) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
 
   const data = (await response.json()) as { updatedAt?: string };
   return { updatedAt: data.updatedAt ?? new Date().toISOString() };

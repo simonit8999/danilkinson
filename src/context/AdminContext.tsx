@@ -10,7 +10,6 @@ import { CONFIG } from '../config';
 import { remoteLogin } from '../lib/api';
 import {
   clearAdminSession,
-  detectAdminFlag,
   grantAdminEntry,
   hasAdminEntry,
   readAdminSession,
@@ -30,11 +29,9 @@ interface AdminApi {
 const AdminContext = createContext<AdminApi | null>(null);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [entry, setEntry] = useState<boolean>(() => {
-    const flagged = detectAdminFlag();
-    if (flagged) grantAdminEntry();
-    return flagged || hasAdminEntry();
-  });
+  // Доступ в кабинет даёт только тройное нажатие по верхней плашке
+  // (флаг хранится в sessionStorage до закрытия вкладки).
+  const [entry, setEntry] = useState<boolean>(() => hasAdminEntry());
   const [authenticated, setAuthenticated] = useState<boolean>(() => readAdminSession());
 
   const grantEntry = useCallback(() => {

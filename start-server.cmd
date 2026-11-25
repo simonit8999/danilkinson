@@ -14,9 +14,13 @@ if errorlevel 1 (
 )
 
 if not exist "dist\index.html" (
-  echo ВНИМАНИЕ: сборка dist\index.html не найдена.
-  echo Сначала выполните:  npm.cmd run build
-  echo.
+  echo [start-server] сборка не найдена, собираю сайт: npm.cmd run build
+  call npm.cmd run build
+  if errorlevel 1 (
+    echo [start-server] сборка не удалась. Проверьте Node.js 22.12+ и повторите.
+    pause
+    exit /b 1
+  )
 )
 
 echo [start-server] каталог и сайт: http://127.0.0.1:3000

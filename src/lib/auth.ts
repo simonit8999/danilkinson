@@ -1,20 +1,6 @@
 import { ADMIN_HASHES, CONFIG } from '../config';
 import { sessionGet, sessionRemove, sessionSet } from './storage';
 
-export function detectAdminFlag(): boolean {
-  const search = new URLSearchParams(window.location.search);
-  if (search.get('admin') === '1') return true;
-
-  const hash = window.location.hash;
-  const queryIndex = hash.indexOf('?');
-  if (queryIndex >= 0) {
-    const hashQuery = new URLSearchParams(hash.slice(queryIndex + 1));
-    if (hashQuery.get('admin') === '1') return true;
-  }
-
-  return false;
-}
-
 export function grantAdminEntry(): void {
   sessionSet(CONFIG.storage.adminEntry, '1');
 }

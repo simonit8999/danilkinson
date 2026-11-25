@@ -45,10 +45,20 @@ async function scenario(name, path, selector, action) {
   }
 }
 
+// Вход в кабинет — только три нажатия подряд по верхней плашке.
+async function tripleTapHeader(page) {
+  const header = page.locator('.app-header img');
+
+  for (let index = 0; index < 3; index += 1) {
+    await header.click({ position: { x: 12, y: 12 } });
+    await page.waitForTimeout(120);
+  }
+}
+
 await scenario('catalog', '/', '.product-card', async (page) => ({
   cards: await page.locator('.product-card').count(),
   cardButtons: await page.locator('.card-order-btn').count(),
-  adminButton: await page.locator('#adminBtn').count(),
+  floatingAdminButton: await page.locator('#adminBtn').count(),
   manifest: await page.evaluate(() => document.querySelector('link[rel="manifest"]')?.getAttribute('href') ?? null),
 }));
 
@@ -76,13 +86,25 @@ await scenario('archive', '/#/archive', '.archive-grid', async (page) => ({
   items: await page.locator('.archive-item').count(),
 }));
 
-await scenario('admin-gate', '/?admin=1#/admin', '#admin-login', async (page) => ({
-  login: await page.locator('#admin-login').count(),
-  password: await page.locator('#admin-password').count(),
-  adminButton: await page.locator('#adminBtn').count(),
-}));
+await scenario('admin-single-tap', '/', '.product-card', async (page) => {
+  await page.locator('.app-header img').click({ position: { x: 12, y: 12 } });
+  await page.waitForTimeout(400);
+  return { login: await page.locator('#admin-login').count() };
+});
 
-await scenario('admin-login', '/?admin=1#/admin', '#admin-login', async (page) => {
+await scenario('admin-triple-tap', '/', '.product-card', async (page) => {
+  await tripleTapHeader(page);
+  await page.waitForSelector('#admin-login', { timeout: 5000 });
+  return {
+    login: await page.locator('#admin-login').count(),
+    password: await page.locator('#admin-password').count(),
+    hash: await page.evaluate(() => window.location.hash),
+  };
+});
+
+await scenario('admin-login', '/', '.product-card', async (page) => {
+  await tripleTapHeader(page);
+  await page.waitForSelector('#admin-login', { timeout: 5000 });
   await page.locator('#admin-login').fill('admin1');
   await page.locator('#admin-password').fill(process.env.ADMIN1_PASS ?? '');
   await page.locator('.save-btn').click();
@@ -90,6 +112,7 @@ await scenario('admin-login', '/?admin=1#/admin', '#admin-login', async (page) =
   return {
     header: await page.locator('.screen-header').first().innerText(),
     rows: await page.locator('.admin-product-row').count(),
+    apiField: await page.locator('#admin-api-base').count(),
   };
 });
 
@@ -99,16 +122,23 @@ await scenario('catalog-after-scroll', '/', '.product-card', async (page) => {
     if (area) area.scrollTop = 400;
   });
   await page.waitForTimeout(400);
-  return { adminButton: await page.locator('#adminBtn').count() };
+  return { floatingAdminButton: await page.locator('#adminBtn').count() };
 });
 
-await scenario('admin-entry-after-scroll', '/?admin=1#/', '.product-card', async (page) => {
+await scenario('admin-entry-after-scroll', '/', '.product-card', async (page) => {
   await page.evaluate(() => {
     const area = document.querySelector('.scroll-area');
     if (area) area.scrollTop = 400;
   });
-  await page.waitForTimeout(400);
-  return { adminButton: await page.locator('#adminBtn').count() };
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const area = document.querySelector('.scroll-area');
+    if (area) area.scrollTop = 0;
+  });
+  await page.waitForTimeout(200);
+  await tripleTapHeader(page);
+  await page.waitForSelector('#admin-login', { timeout: 5000 });
+  return { login: await page.locator('#admin-login').count() };
 });
 
 await scenario('pwa', '/', '.product-card', async (page) => {
