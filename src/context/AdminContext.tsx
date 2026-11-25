@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { CONFIG } from '../config';
+import { remoteLogin } from '../lib/api';
 import {
   clearAdminSession,
   detectAdminFlag,
@@ -16,7 +17,7 @@ import {
   verifyAdmin,
   writeAdminSession,
 } from '../lib/auth';
-import { sessionRemove } from '../lib/storage';
+import { sessionRemove, sessionSet } from '../lib/storage';
 
 interface AdminApi {
   entry: boolean;
@@ -48,6 +49,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       grantAdminEntry();
       setAuthenticated(true);
       setEntry(true);
+
+      // Токен нужен серверу, чтобы принимать изменения каталога.
+      // Если сервер недоступен, сайт продолжает работать в локальном режиме.
+      const token = await remoteLogin(loginValue, password);
+      if (token) sessionSet(CONFIG.storage.serverToken, token);
+      else sessionRemove(CONFIG.storage.serverToken);
     }
     return ok;
   }, []);
@@ -55,6 +62,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearAdminSession();
     sessionRemove(CONFIG.storage.adminEntry);
+    sessionRemove(CONFIG.storage.serverToken);
     setAuthenticated(false);
     setEntry(false);
   }, []);

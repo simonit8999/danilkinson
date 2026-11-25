@@ -1,4 +1,4 @@
-const CACHE = 'ua-pwa-v3';
+const CACHE = 'ua-pwa-v4';
 
 const SHELL = [
   './',
@@ -77,6 +77,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.hostname === 't.me') return;
+
+  // API и живые данные каталога кешировать нельзя: админ сохраняет правки.
+  if (url.pathname.includes('/api/') || url.pathname.endsWith('/data/products.json')) {
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, './index.html'));

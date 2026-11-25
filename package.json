@@ -8,6 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "server": "node server/index.mjs",
+    "tunnel": "ngrok http 127.0.0.1:3000",
+    "publish": "node server/publish.mjs",
     "hash-admin": "node scripts/hash-admin.mjs"
   },
   "engines": {

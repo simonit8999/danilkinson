@@ -53,8 +53,8 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const container = document.querySelector('.container');
-    container?.scrollTo({ top: 0 });
+    const area = document.querySelector('.scroll-area');
+    area?.scrollTo({ top: 0 });
   }, [pathname]);
 
   return null;
@@ -73,7 +73,11 @@ function Shell() {
     const element = containerRef.current;
     if (!element) return;
 
-    const onScroll = () => setScrolled(element.scrollTop > 80);
+    const onScroll = () => {
+      const header = element.querySelector('.app-header');
+      const threshold = header instanceof HTMLElement ? header.offsetHeight : 80;
+      setScrolled(element.scrollTop > threshold);
+    };
     element.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
@@ -123,31 +127,33 @@ function Shell() {
         style={{ backgroundImage: `url("${BACKGROUND_IMAGE}")` }}
       />
 
-      <header className="app-header">
-        <img
-          src={HEADER_IMAGE}
-          alt="(undefined) archangel"
-          onClick={onLogoTap}
-          onError={(event) => {
-            if (event.currentTarget.dataset.fallback === '1') return;
-            event.currentTarget.dataset.fallback = '1';
-            event.currentTarget.src = FALLBACK_LOGO;
-          }}
-        />
-      </header>
+      <div className="scroll-area" ref={containerRef}>
+        <header className="app-header">
+          <img
+            src={HEADER_IMAGE}
+            alt="(undefined) archangel"
+            onClick={onLogoTap}
+            onError={(event) => {
+              if (event.currentTarget.dataset.fallback === '1') return;
+              event.currentTarget.dataset.fallback = '1';
+              event.currentTarget.src = FALLBACK_LOGO;
+            }}
+          />
+        </header>
 
-      <div className="container" ref={containerRef}>
-        <ScrollToTop />
+        <div className="container">
+          <ScrollToTop />
 
-        <Routes>
-          <Route path="/" element={<Catalog />} />
-          <Route path="/archive" element={<Archive />} />
-          <Route path="/search" element={<SearchScreen />} />
-          <Route path="/item/:id" element={<Detail />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="/admin" element={<AdminRoute />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Catalog />} />
+            <Route path="/archive" element={<Archive />} />
+            <Route path="/search" element={<SearchScreen />} />
+            <Route path="/item/:id" element={<Detail />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/admin" element={<AdminRoute />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">

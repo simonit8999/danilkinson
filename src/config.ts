@@ -1,25 +1,30 @@
+import adminHashes from '../shared/admin-hashes.json';
+
+/** Адрес API. Пусто = тот же origin (сервер отдаёт и сайт, и API). */
+const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
 export const CONFIG = {
   brand: 'UNDEFINED ARCH',
   telegramUsername: 'danilkinson',
   channel: 'UndefinedArch',
   reviews: 'UndefinedReview',
+  apiBase,
   dataUrl: `${import.meta.env.BASE_URL}data/products.json`,
   storage: {
     catalog: 'ua_products_v1',
     adminEntry: 'ua_admin_entry_v1',
     adminSession: 'ua_admin_session_v1',
+    serverToken: 'ua_server_token_v1',
   },
   adminSessionTtlMs: 12 * 60 * 60 * 1000,
 } as const;
 
 /**
- * Два админа = два SHA-256 хеша от строки "login:password" (login в lower case).
- * Плейнтекстовые логины и пароли в репозиторий не попадают.
+ * Админы = SHA-256 хеши от строки "login:password" (login в lower case).
+ * Список лежит в shared/admin-hashes.json: его читает и сайт, и сервер.
  *
- * Сгенерировать новый хеш:
- *   node scripts/hash-admin.mjs <login> <password>
+ * Сгенерировать новый хеш и добавить в список:
+ *   npm run hash-admin -- <login> <password> --add
  */
-export const ADMIN_HASHES: readonly string[] = [
-  '152ce097e64400ffce38132dd2bab783dc3ed3373d67a1a3609aa1647074ca9d',
-  '6ee5e93de573b482ed8db2abd6d55fad15241b09caa49ed8fd86d29032a882ee',
-];
+export const ADMIN_HASHES: readonly string[] = adminHashes;
+

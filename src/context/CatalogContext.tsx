@@ -4,19 +4,24 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { CONFIG } from '../config';
 import { seedProducts } from '../data/seed';
+import { fetchRemoteCatalog, putRemoteCatalog } from '../lib/api';
 import { hashString, newProductId, normalizeProducts } from '../lib/products';
-import { readJson, removeKey, writeJson } from '../lib/storage';
+import { readJson, removeKey, sessionGet, writeJson } from '../lib/storage';
 import type { Product } from '../types';
 
 interface LocalCatalog {
   baseHash: string;
   products: Product[];
 }
+
+/** idle — всё синхронизировано, offline — сервер недоступен/нет токена. */
+export type SyncState = 'idle' | 'saving' | 'saved' | 'offline' | 'error';
 
 interface CatalogApi {
   products: Product[];
@@ -25,6 +30,9 @@ interface CatalogApi {
   loading: boolean;
   dirty: boolean;
   stale: boolean;
+  sync: SyncState;
+  serverOnline: boolean;
+  serverUpdatedAt: string | null;
   saveProduct: (input: Omit<Product, 'id'>, id?: string) => void;
   deleteProduct: (id: string) => void;
   archiveProduct: (id: string) => void;
@@ -33,6 +41,8 @@ interface CatalogApi {
   exportJson: () => string;
   importJson: (text: string) => number;
   resetLocal: () => void;
+  publishNow: () => Promise<void>;
+  reloadFromServer: () => Promise<void>;
 }
 
 const CatalogContext = createContext<CatalogApi | null>(null);
@@ -79,11 +89,61 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [stale, setStale] = useState(false);
+  const [sync, setSync] = useState<SyncState>('idle');
+  const [serverOnline, setServerOnline] = useState(false);
+  const [serverUpdatedAt, setServerUpdatedAt] = useState<string | null>(null);
+
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const publish = useCallback(async (next: Product[]) => {
+    const token = sessionGet(CONFIG.storage.serverToken);
+    if (!token) {
+      setSync('offline');
+      return;
+    }
+
+    setSync('saving');
+    try {
+      const result = await putRemoteCatalog(next, token);
+      const hash = hashString(JSON.stringify(next));
+
+      setPublished(next);
+      setPublishedHash(hash);
+      setServerUpdatedAt(result.updatedAt);
+      setServerOnline(true);
+      setDirty(false);
+      setStale(false);
+      setSync('saved');
+      writeJson(CONFIG.storage.catalog, { baseHash: hash, products: next });
+    } catch (error) {
+      console.warn('[catalog] publish failed', error);
+      setSync('error');
+    }
+  }, []);
+
+  const schedulePublish = useCallback((next: Product[]) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      void publish(next);
+    }, 700);
+  }, [publish]);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
 
   useEffect(() => {
     let alive = true;
 
-    fetchPublished().then((list) => {
+    (async () => {
+      const remote = await fetchRemoteCatalog();
+      if (!alive) return;
+
+      setServerOnline(remote !== null);
+      if (remote?.updatedAt) setServerUpdatedAt(remote.updatedAt);
+
+      const list = remote ? normalizeProducts(remote.products) : await fetchPublished();
       if (!alive) return;
 
       const hash = hashString(JSON.stringify(list));
@@ -95,7 +155,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       setDirty(local !== null);
       setStale(local !== null && local.baseHash !== hash);
       setLoading(false);
-    });
+    })();
 
     return () => {
       alive = false;
@@ -111,7 +171,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     if (!writeJson(CONFIG.storage.catalog, payload)) {
       console.warn('[catalog] localStorage write failed');
     }
-  }, [publishedHash]);
+
+    schedulePublish(next);
+  }, [publishedHash, schedulePublish]);
 
   const saveProduct = useCallback((input: Omit<Product, 'id'>, id?: string) => {
     const next = id
@@ -142,6 +204,36 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     )));
   }, [persist, products]);
 
+  const publishNow = useCallback(async () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    await publish(products);
+  }, [publish, products]);
+
+  const reloadFromServer = useCallback(async () => {
+    const remote = await fetchRemoteCatalog();
+    if (!remote) {
+      setServerOnline(false);
+      setSync('offline');
+      return;
+    }
+
+    const list = normalizeProducts(remote.products);
+    const hash = hashString(JSON.stringify(list));
+
+    removeKey(CONFIG.storage.catalog);
+    setPublished(list);
+    setPublishedHash(hash);
+    setProducts(list);
+    setDirty(false);
+    setStale(false);
+    setSync('idle');
+    setServerOnline(true);
+    setServerUpdatedAt(remote.updatedAt ?? null);
+  }, []);
+
   const exportJson = useCallback(() => JSON.stringify(products, null, 2), [products]);
 
   const importJson = useCallback((text: string) => {
@@ -157,6 +249,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setProducts(published);
     setDirty(false);
     setStale(false);
+    setSync('idle');
   }, [published]);
 
   const visible = useMemo(
@@ -176,6 +269,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     loading,
     dirty,
     stale,
+    sync,
+    serverOnline,
+    serverUpdatedAt,
     saveProduct,
     deleteProduct,
     archiveProduct,
@@ -184,6 +280,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     exportJson,
     importJson,
     resetLocal,
+    publishNow,
+    reloadFromServer,
   }), [
     products,
     visible,
@@ -191,6 +289,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     loading,
     dirty,
     stale,
+    sync,
+    serverOnline,
+    serverUpdatedAt,
     saveProduct,
     deleteProduct,
     archiveProduct,
@@ -199,6 +300,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     exportJson,
     importJson,
     resetLocal,
+    publishNow,
+    reloadFromServer,
   ]);
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;

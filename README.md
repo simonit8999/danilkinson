@@ -1,7 +1,9 @@
 # UNDEFINED ARCH
 
-Магазин-витрина (PWA) на React 19 + TypeScript + Vite 8. Без бэкенда: каталог лежит в JSON,
-заказы отправляются в Telegram, админка работает поверх localStorage.
+Магазин-витрина (PWA) на React 19 + TypeScript + Vite 8. Фронтенд статический:
+каталог лежит в JSON, заказы отправляются в Telegram, админка работает поверх localStorage.
+Для совместного редактирования каталога есть опциональный локальный сервер
+(`server/index.mjs`) + туннель ngrok — см. раздел ниже.
 
 ## Стек
 
@@ -31,6 +33,9 @@ public/                  копируется в сборку как есть
   sw.js                  service worker
   icons/                 иконки PWA
 scripts/                 вспомогательные скрипты (в сборку не попадают)
+server/                  локальный сервер каталога (статика dist + API) и publish.mjs
+shared/admin-hashes.json хеши админов: читают и сайт, и сервер
+.env.example             PORT / HOST / VITE_API_URL
 .github/workflows/       GitHub Actions: сборка и публикация на GitHub Pages
 ```
 
@@ -42,6 +47,9 @@ npm run dev        # http://localhost:5173
 npm run build      # tsc --noEmit + vite build -> dist/
 npm run preview    # локальный просмотр собранной версии http://localhost:4173
 npm run typecheck  # только проверка типов
+npm run server     # локальный сервер каталога + сайта: http://127.0.0.1:3000
+npm run tunnel     # ngrok http 3000 (доступ из интернета)
+npm run publish    # server/data/products.json -> public/data/products.json
 ```
 
 Нужен Node.js >= 22.12 (требование Vite 8).
@@ -110,9 +118,52 @@ npm run hash-admin -- <login> <password>
 
 Публикация изменений:
 
-- Правки админа сохраняются только в браузере (localStorage).
-- Чтобы их увидели покупатели: Admin → `EXPORT JSON` → заменить `public/data/products.json` → commit/push.
-- Фото товаров сначала положите в `public/images/products/`, затем укажите путь в админке.
+- Если сайт открыт через локальный сервер (`npm run server` + ngrok), правки админа
+  сохраняются в `server/data/products.json` автоматически и сразу видны покупателям.
+- Без сервера (например GitHub Pages) правки хранятся в браузере (localStorage):
+  Admin → `EXPORT JSON` → заменить `public/data/products.json` → commit/push.
+- Фото товаров добавляются ссылкой (поле «URL изображений»); файлы можно положить
+  в `public/images/products/` и указать путь `./images/products/name.png`.
+
+## Совместное редактирование каталога (сервер + ngrok)
+
+Сервер `server/index.mjs` отдаёт и собранный сайт (`dist/`), и API каталога,
+поэтому клиенту достаточно одной ссылки. Зависимостей нет — только Node.js.
+
+1. Соберите сайт: `npm run build`.
+2. Запустите сервер: `npm run server` (порт 3000, слушает только `127.0.0.1`).
+3. Поднимите туннель: `npm run tunnel` (нужен установленный и авторизованный ngrok).
+   В панели ngrok можно взять бесплатный статический домен, чтобы ссылка не менялась:
+   `ngrok http --url=ваш-домен.ngrok-free.dev 127.0.0.1:3000`.
+4. Отправьте клиенту ссылку туннеля. Вход в админку — тройной тап по верхней плашке
+   или `?admin=1`, логин/пароль те же (список хешей в `shared/admin-hashes.json`).
+5. Любая правка в админке уходит на сервер через `PUT /api/catalog` (автосохранение
+   с задержкой ~0,7 с, кнопка `PUBLISH NOW` — сразу). Статус виден в админке:
+   `SERVER: ONLINE · SYNC: SAVED`, дата публикации.
+
+Добавить отдельный доступ клиенту (и отозвать его удалением строки из JSON):
+
+```
+npm run hash-admin -- <login> <password> --add
+npm run build
+```
+
+Синхронизировать GitHub Pages с серверным каталогом:
+
+```
+npm run publish     # копирует server/data/products.json в public/data/products.json
+```
+
+Затем закоммитьте `public/data/products.json` — Actions пересоберёт сайт.
+
+Особенности:
+
+- ПК с сервером должен быть включён, сон/гибернация выключены.
+- Бесплатный ngrok при первом заходе в браузере показывает промежуточную страницу
+  «You are about to visit…» — её нужно один раз подтвердить. API-запросы её обходят.
+- Бэкапы каждой записи: `server/data/backups/` (хранятся последние 30).
+- Если сервер недоступен, админка продолжает работать локально (localStorage),
+  а в статусе будет `SERVER: OFFLINE · SYNC: LOCAL ONLY`.
 
 ## Заказы
 
@@ -148,6 +199,7 @@ node scripts/smoke2.mjs
 ## Ограничения
 
 - Бронирование не синхронизируется между устройствами: статус ставит админ.
-- Нет сервера: правки в админке приватны, пока не опубликован `public/data/products.json`.
+- Без запущенного сервера правки в админке приватны (localStorage на устройстве);
+  с сервером они сразу видны всем, кто открыл ссылку туннеля.
 - Персональные Open Graph превью для товаров требуют SSR и здесь недоступны.
-- Имя кэша service worker — `ua-pwa-v1`; поднимите версию в `public/sw.js` после изменений логики кэша.
+- Имя кэша service worker — `ua-pwa-v4`; поднимите версию в `public/sw.js` после изменений логики кэша.

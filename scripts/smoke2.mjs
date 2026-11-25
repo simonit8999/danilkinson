@@ -95,8 +95,8 @@ await scenario('admin-login', '/?admin=1#/admin', '#admin-login', async (page) =
 
 await scenario('catalog-after-scroll', '/', '.product-card', async (page) => {
   await page.evaluate(() => {
-    const container = document.querySelector('.container');
-    if (container) container.scrollTop = 400;
+    const area = document.querySelector('.scroll-area');
+    if (area) area.scrollTop = 400;
   });
   await page.waitForTimeout(400);
   return { adminButton: await page.locator('#adminBtn').count() };
@@ -104,8 +104,8 @@ await scenario('catalog-after-scroll', '/', '.product-card', async (page) => {
 
 await scenario('admin-entry-after-scroll', '/?admin=1#/', '.product-card', async (page) => {
   await page.evaluate(() => {
-    const container = document.querySelector('.container');
-    if (container) container.scrollTop = 400;
+    const area = document.querySelector('.scroll-area');
+    if (area) area.scrollTop = 400;
   });
   await page.waitForTimeout(400);
   return { adminButton: await page.locator('#adminBtn').count() };

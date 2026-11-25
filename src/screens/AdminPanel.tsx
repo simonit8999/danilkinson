@@ -23,6 +23,14 @@ const EMPTY_FORM: FormState = {
   soldOut: false,
 };
 
+const SYNC_LABEL: Record<string, string> = {
+  idle: 'READY',
+  saving: 'SAVING…',
+  saved: 'SAVED',
+  offline: 'LOCAL ONLY',
+  error: 'SAVE FAILED',
+};
+
 function toForm(product: Product | null): FormState {
   if (!product) return { ...EMPTY_FORM };
 
@@ -51,6 +59,11 @@ export default function AdminPanel() {
     resetLocal,
     dirty,
     stale,
+    sync,
+    serverOnline,
+    serverUpdatedAt,
+    publishNow,
+    reloadFromServer,
   } = useCatalog();
 
   const [loginValue, setLoginValue] = useState('');
@@ -130,7 +143,7 @@ export default function AdminPanel() {
         </form>
 
         <div className="help-block">
-          <p>ADMIN PANEL IS A LOCAL EDITOR. CHANGES ARE SAVED IN THIS BROWSER ONLY.</p>
+          <p>ПРАВКИ УХОДЯТ НА СЕРВЕР И СРАЗУ ВИДНЫ ПОКУПАТЕЛЯМ. ЕСЛИ СЕРВЕР НЕДОСТУПЕН — ТОЛЬКО В ЭТОМ БРАУЗЕРЕ.</p>
         </div>
       </div>
     );
@@ -177,23 +190,23 @@ export default function AdminPanel() {
     }, editing?.id);
 
     setEditingId(null);
-    setNotice('СОХРАНЕНО ЛОКАЛЬНО. ЭКСПОРТИРУЙТЕ JSON И ОБНОВИТЕ public/data/products.json.');
+    setNotice('СОХРАНЕНО. ОТПРАВКА НА СЕРВЕР...');
   };
 
   const onDelete = (product: Product) => {
     if (!window.confirm(`Удалить товар "${product.name}"?`)) return;
     deleteProduct(product.id);
-    setNotice('ТОВАР УДАЛЁН ЛОКАЛЬНО.');
+    setNotice('ТОВАР УДАЛЁН.');
   };
 
   const onArchive = (product: Product) => {
     archiveProduct(product.id);
-    setNotice('ТОВАР ПЕРЕНЕСЁН В АРХИВ ЛОКАЛЬНО.');
+    setNotice('ТОВАР ПЕРЕНЕСЁН В АРХИВ.');
   };
 
   const onRestore = (product: Product) => {
     restoreProduct(product.id);
-    setNotice('ТОВАР ВОЗВРАЩЁН В КАТАЛОГ ЛОКАЛЬНО.');
+    setNotice('ТОВАР ВОЗВРАЩЁН В КАТАЛОГ.');
   };
 
   const onSoldOut = (product: Product) => {
@@ -253,6 +266,14 @@ export default function AdminPanel() {
     <div className="screen fade-in">
       <h1 className="screen-header">ADMIN · PRODUCTS</h1>
 
+      <div className="server-status" data-online={serverOnline ? 'true' : 'false'}>
+        <span>{serverOnline ? 'SERVER: ONLINE' : 'SERVER: OFFLINE'}</span>
+        <span>SYNC: {SYNC_LABEL[sync] ?? sync.toUpperCase()}</span>
+        {serverUpdatedAt && (
+          <span>PUBLISHED: {new Date(serverUpdatedAt).toLocaleString()}</span>
+        )}
+      </div>
+
       {notice && (
         <div className="help-block">
           <p>{notice}</p>
@@ -262,8 +283,8 @@ export default function AdminPanel() {
       {stale && (
         <div className="help-block">
           <p>
-            ОПУБЛИКОВАННЫЙ КАТАЛОГ ИЗМЕНИЛСЯ. ВЫ РЕДАКТИРУЕТЕ ЛОКАЛЬНУЮ КОПИЮ.
-            ЭКСПОРТИРУЙТЕ JSON ИЛИ НАЖМИТЕ RESET LOCAL, ЧТОБЫ ЗАГРУЗИТЬ НОВУЮ ВЕРСИЮ.
+            КАТАЛОГ НА СЕРВЕРЕ ИЗМЕНИЛСЯ. НАЖМИТЕ RELOAD SERVER, ЧТОБЫ ВЗЯТЬ СВЕЖУЮ ВЕРСИЮ
+            (ЛОКАЛЬНЫЕ ПРАВКИ ПРИ ЭТОМ ПРОПАДУТ).
           </p>
         </div>
       )}
@@ -271,13 +292,15 @@ export default function AdminPanel() {
       {dirty && !stale && (
         <div className="help-block">
           <p>
-            В БРАУЗЕРЕ ЕСТЬ ЛОКАЛЬНЫЕ ИЗМЕНЕНИЯ. ОНИ НЕ ВИДНЫ ПОКУПАТЕЛЯМ, ПОКА ВЫ
-            НЕ ЭКСПОРТИРУЕТЕ JSON И НЕ ОБНОВИТЕ ФАЙЛ НА GITHUB.
+            ЕСТЬ НЕОПУБЛИКОВАННЫЕ ИЗМЕНЕНИЯ. ПОДОЖДИТЕ СЕКУНДУ (АВТОСОХРАНЕНИЕ)
+            ИЛИ НАЖМИТЕ PUBLISH NOW.
           </p>
         </div>
       )}
 
       <div className="admin-actions" style={{ marginBottom: 16 }}>
+        <button type="button" onClick={() => void publishNow()}>PUBLISH NOW</button>
+        <button type="button" onClick={() => void reloadFromServer()}>RELOAD SERVER</button>
         <button type="button" onClick={() => setExportOpen(true)}>EXPORT JSON</button>
         <button type="button" onClick={() => setImportOpen(true)}>IMPORT JSON</button>
         <button type="button" onClick={onReset}>RESET LOCAL</button>

@@ -1,0 +1,123 @@
+[
+  {
+    "id": "ua-001",
+    "name": "LEATHER BIKER JACKET",
+    "price": "€ 24 000",
+    "images": [
+      "https://picsum.photos/seed/ua01/900/900"
+    ],
+    "description": "Heavy black leather biker jacket. Fits true to size. Minor patina on the sleeves, all hardware works.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-002",
+    "name": "WOOL OVERCOAT",
+    "price": "€ 18 500",
+    "images": [
+      "https://picsum.photos/seed/ua02/900/900"
+    ],
+    "description": "Charcoal wool overcoat. Fully lined. No defects.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-003",
+    "name": "NIKE AIR MAX 90",
+    "price": "€ 9 000",
+    "images": [
+      "https://picsum.photos/seed/ua03/900/900"
+    ],
+    "description": "Classic white and grey colorway. Light wear, clean soles.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-004",
+    "name": "VINTAGE DENIM JACKET",
+    "price": "€ 7 500",
+    "images": [
+      "https://picsum.photos/seed/ua04/900/900"
+    ],
+    "description": "Faded indigo denim jacket. Distressed by time, not by hand.",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-005",
+    "name": "CARGO TROUSERS",
+    "price": "€ 6 500",
+    "images": [
+      "https://picsum.photos/seed/ua05/900/900"
+    ],
+    "description": "Olive cargo trousers with multiple pockets. Relaxed fit.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-006",
+    "name": "SILK SLIP DRESS",
+    "price": "€ 11 000",
+    "images": [
+      "https://picsum.photos/seed/ua06/900/900"
+    ],
+    "description": "Black silk slip dress. Midi length. Worn once.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-007",
+    "name": "CHROME HEARTS HOODIE",
+    "price": "€ 14 000",
+    "images": [
+      "https://picsum.photos/seed/ua07/900/900"
+    ],
+    "description": "Black hoodie with silver hardware. Heavy cotton.",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-008",
+    "name": "DOC MARTENS BOOTS",
+    "price": "€ 12 000",
+    "images": [
+      "https://picsum.photos/seed/ua08/900/900"
+    ],
+    "description": "Black leather 1460 boots. Broken in, no cracks.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-009",
+    "name": "MESH JERSEY",
+    "price": "€ 4 500",
+    "images": [
+      "https://picsum.photos/seed/ua09/900/900"
+    ],
+    "description": "Black mesh jersey with contrast stitching. New with tags.",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-010",
+    "name": "LEATHER TOTE",
+    "price": "€ 9 500",
+    "images": [
+      "https://picsum.photos/seed/ua10/900/900"
+    ],
+    "description": "Brown leather tote bag. Fits a laptop. Sold in archive.",
+    "soldOut": true,
+    "archived": true
+  },
+  {
+    "id": "ua-011",
+    "name": "WOOL SCARF",
+    "price": "€ 2 500",
+    "images": [
+      "https://picsum.photos/seed/ua11/900/900"
+    ],
+    "description": "Grey wool scarf. Archive piece from the first drop.",
+    "soldOut": false,
+    "archived": true
+  }
+]
