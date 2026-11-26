@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FullscreenImage } from '../components/FullscreenImage';
 import { useCatalog } from '../context/CatalogContext';
+import { resolveAssetUrl } from '../lib/assets';
 
 const emptyStyle = {
   gridColumn: '1/-1',
@@ -20,16 +21,20 @@ export function Archive() {
       <div className="archive-grid">
         {archived.length === 0 ? (
           <div style={emptyStyle}>ARCHIVE IS EMPTY.</div>
-        ) : archived.map((product) => (
-          <button
-            className="archive-item"
-            type="button"
-            key={product.id}
-            onClick={() => setFullscreen(product.images[0])}
-          >
-            <img src={product.images[0]} alt={product.name} loading="lazy" />
-          </button>
-        ))}
+        ) : archived.map((product) => {
+          const image = resolveAssetUrl(product.cover || product.images[0]);
+
+          return (
+            <button
+              className="archive-item"
+              type="button"
+              key={product.id}
+              onClick={() => setFullscreen(image)}
+            >
+              <img src={image} alt={product.name} loading="lazy" />
+            </button>
+          );
+        })}
       </div>
 
       {fullscreen && (

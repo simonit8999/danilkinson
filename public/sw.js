@@ -1,4 +1,4 @@
-const CACHE = 'ua-pwa-v6';
+const CACHE = 'ua-pwa-v7';
 
 const SHELL = [
   './',
@@ -31,7 +31,11 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) => Promise.all(
-        keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)),
+        // На github.io один origin у всех проектов пользователя:
+        // удаляем только свои кеши, чужие не трогаем.
+        keys
+          .filter((key) => key.startsWith('ua-pwa-') && key !== CACHE)
+          .map((key) => caches.delete(key)),
       ))
       .then(() => self.clients.claim()),
   );
@@ -39,11 +43,18 @@ self.addEventListener('activate', (event) => {
 
 function put(request, response) {
   if (!response || (!response.ok && response.type !== 'opaque')) return Promise.resolve();
-  return caches.open(CACHE).then((cache) => cache.put(request, response));
+  return caches
+    .open(CACHE)
+    .then((cache) => cache.put(request, response))
+    .catch(() => {
+      // некоторые ответы (например, opaque/ошибки) Cache API не принимает
+    });
 }
 
 function networkFirst(request, fallbackUrl) {
-  return fetch(request)
+  // cache: 'no-cache' заставляет перепроверить файл на сервере: иначе
+  // заменённое фото будет отдаваться из HTTP-кеша (max-age / immutable).
+  return fetch(request, { cache: 'no-cache' })
     .then((response) => {
       put(request, response.clone());
       return response;
@@ -65,7 +76,7 @@ function cacheFirst(request) {
 
 function staleWhileRevalidate(request) {
   return caches.match(request).then((cached) => {
-    const network = fetch(request)
+    const network = fetch(request, { cache: 'no-cache' })
       .then((response) => {
         put(request, response.clone());
         return response;
@@ -84,8 +95,8 @@ self.addEventListener('fetch', (event) => {
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.hostname === 't.me') return;
 
-  // API и живые данные каталога кешировать нельзя: админ сохраняет правки.
-  if (url.pathname.includes('/api/') || url.pathname.endsWith('/data/products.json')) {
+  // Ответы API не кешируем: админка должна честно видеть статус сервера.
+  if (url.pathname.includes('/api/')) {
     return;
   }
 
@@ -94,12 +105,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.origin === self.location.origin) {
-    if (url.pathname.endsWith('/data/products.json')) {
-      event.respondWith(networkFirst(request, './data/products.json'));
-      return;
-    }
+  // Опубликованный каталог: свежий из сети, при офлайне — из кеша.
+  if (url.pathname.endsWith('/data/products.json')) {
+    event.respondWith(networkFirst(request, './data/products.json'));
+    return;
+  }
 
+  // Фото: сеть в приоритете, иначе заменённый файл «залипает» в кеше.
+  // При офлайне отдаём последнюю сохранённую картинку.
+  if (
+    request.destination === 'image'
+    || /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(url.pathname)
+  ) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (url.origin === self.location.origin) {
     if (
       url.pathname.includes('/assets/')
       || url.pathname.endsWith('.js')

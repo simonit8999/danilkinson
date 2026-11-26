@@ -47,7 +47,13 @@ async function pageTarget() {
     try {
       const response = await fetch(`http://127.0.0.1:${cdpPort}/json`);
       const targets = await response.json();
-      const page = targets.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
+      // Ждём именно страницу с HTTP-адресом: в момент старта Chrome может
+      // отдать about:blank, и первый Runtime.evaluate оборвётся при навигации.
+      const page = targets.find((item) => (
+        item.type === 'page'
+        && item.webSocketDebuggerUrl
+        && /^https?:/i.test(item.url ?? '')
+      ));
       if (page) return page;
     } catch {
       // браузер ещё стартует
@@ -63,6 +69,10 @@ await new Promise((resolve, reject) => {
   socket.addEventListener('open', resolve, { once: true });
   socket.addEventListener('error', reject, { once: true });
 });
+
+// Даём браузеру завершить первый переход: Runtime.evaluate в момент
+// навигации обрывается с "Execution context was destroyed".
+await sleep(1200);
 
 let seq = 0;
 function evaluate(expression) {

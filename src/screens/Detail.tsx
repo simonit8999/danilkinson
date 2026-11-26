@@ -11,6 +11,11 @@ export function Detail() {
   const [orderOpen, setOrderOpen] = useState(false);
 
   const product = products.find((item) => item.id === id);
+  // Главное фото (cover) тоже показываем в галерее: админ часто заполняет
+  // только его, и страница товара не должна оставаться со старой заглушкой.
+  const gallery = product && product.cover && !product.images.includes(product.cover)
+    ? [product.cover, ...product.images]
+    : product?.images ?? [];
 
   // Возврат в предыдущее меню (каталог / архив / поиск).
   // Если товар открыли по прямой ссылке, истории приложения нет — ведём в каталог.
@@ -51,7 +56,7 @@ export function Detail() {
         <h1 className="detail-name">{product.name}</h1>
 
         <div className="detail-gallery">
-          <Carousel images={product.images} name={product.name} />
+          <Carousel images={gallery} name={product.name} />
         </div>
 
         <div className="detail-body">

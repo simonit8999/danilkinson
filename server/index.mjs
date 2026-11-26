@@ -23,7 +23,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { dirname, extname, join, resolve, sep } from 'node:path';
+import { basename, dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 try {
@@ -267,17 +267,57 @@ function readBody(req) {
   });
 }
 
+function cacheControlFor(filePath, name) {
+  if (name === 'index.html' || name === 'sw.js' || name === 'manifest.json') {
+    return 'no-cache';
+  }
+
+  // Собранные Vite-файлы содержат хеш в имени — их можно кешировать надолго.
+  if (filePath.includes(`${sep}assets${sep}`)) {
+    return 'public, max-age=31536000, immutable';
+  }
+
+  // Фото и прочую статику могут заменить под тем же именем:
+  // no-cache + ETag заставляет браузер перепроверять файл (ответ 304 дешёвый).
+  return 'no-cache';
+}
+
 async function serveFile(req, res, filePath) {
   if (!(await isFile(filePath))) return false;
 
   const info = await stat(filePath);
-  const name = filePath.split(/[\\/]/).pop() ?? '';
-  const noCache = name === 'index.html' || name === 'sw.js' || name === 'manifest.json';
+  const name = basename(filePath);
+  const etag = `W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
+
+  res.setHeader('ETag', etag);
+  res.setHeader('Last-Modified', info.mtime.toUTCString());
+  res.setHeader('Cache-Control', cacheControlFor(filePath, name));
+
+  const ifNoneMatch = req.headers['if-none-match'];
+  if (ifNoneMatch) {
+    const matched = ifNoneMatch.trim() === '*'
+      || ifNoneMatch.split(',').some((value) => value.trim() === etag);
+
+    if (matched) {
+      res.writeHead(304);
+      res.end();
+      return true;
+    }
+  } else {
+    const ifModifiedSince = req.headers['if-modified-since'];
+    if (typeof ifModifiedSince === 'string') {
+      const since = Date.parse(ifModifiedSince);
+      if (!Number.isNaN(since) && Math.floor(info.mtimeMs / 1000) * 1000 <= since) {
+        res.writeHead(304);
+        res.end();
+        return true;
+      }
+    }
+  }
 
   res.writeHead(200, {
     'Content-Type': MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream',
     'Content-Length': info.size,
-    'Cache-Control': noCache ? 'no-cache' : 'public, max-age=3600',
   });
 
   if (req.method === 'HEAD') {

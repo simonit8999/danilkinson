@@ -1,4 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
+import { resolveAssetUrl } from '../lib/assets';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -8,7 +9,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
-  const cover = product.cover || product.images[0];
+  const cover = resolveAssetUrl(product.cover || product.images[0]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {

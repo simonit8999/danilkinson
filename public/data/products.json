@@ -1,23 +1,25 @@
 [
   {
-    "id": "ua-001",
-    "name": "LEATHER BIKER JACKET",
-    "price": "€ 24 000",
+    "id": "ua-mwwbg4rc",
+    "name": "Juicy Couture",
+    "price": "500 000",
     "images": [
-      "https://picsum.photos/seed/ua01/900/900"
+      "https://picsum.photos/id/100/600/600"
     ],
-    "description": "Heavy black leather biker jacket. Fits true to size. Minor patina on the sleeves, all hardware works.",
+    "cover": "https://app.mozg.world/media/cNxgoZ4DTaRuEOEkqsVI6GzSiqxynGb0_dadfc29be2ccf9cf.png",
+    "description": "да ну",
     "soldOut": false,
     "archived": false
   },
   {
-    "id": "ua-002",
-    "name": "WOOL OVERCOAT",
-    "price": "€ 18 500",
+    "id": "ua-mwwbehpd",
+    "name": "EXCLUSIVE CONVERSE Studded spike",
+    "price": "4000р",
     "images": [
-      "https://picsum.photos/seed/ua02/900/900"
+      "https://picsum.photos/id/100/600/600"
     ],
-    "description": "Charcoal wool overcoat. Fully lined. No defects.",
+    "cover": "https://app.mozg.world/media/ShZa_SYK_JYEylpR4exqCL0AuU3Qe2Ac_dadfc29be2ccf9cf.png",
+    "description": "",
     "soldOut": false,
     "archived": false
   },

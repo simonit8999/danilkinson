@@ -12,6 +12,8 @@ export const CONFIG = {
   dataUrl: `${import.meta.env.BASE_URL}data/products.json`,
   storage: {
     catalog: 'ua_products_v1',
+    // Последний удачный каталог с сервера — для офлайна и мгновенного старта.
+    catalogCache: 'ua_catalog_cache_v1',
     adminEntry: 'ua_admin_entry_v1',
     adminSession: 'ua_admin_session_v1',
     serverToken: 'ua_server_token_v1',

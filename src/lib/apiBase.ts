@@ -13,6 +13,17 @@ import { removeKey } from './storage';
 
 export const normalizeApiBase = (value: string) => value.trim().replace(/\/+$/, '');
 
+/** Событие для UI: адрес API изменился (в т.ч. автоматически). */
+export const API_BASE_CHANGED = 'ua:api-base-changed';
+
+function notifyApiBaseChanged(): void {
+  try {
+    window.dispatchEvent(new Event(API_BASE_CHANGED));
+  } catch {
+    // window может быть недоступен в тестах
+  }
+}
+
 function readStored(): string {
   try {
     const raw = window.localStorage.getItem(CONFIG.storage.apiBase);
@@ -41,11 +52,14 @@ export function saveApiBase(value: string): string {
     // localStorage может быть недоступен — работаем на адресе из сборки
   }
 
+  notifyApiBaseChanged();
+
   return next || CONFIG.apiBase;
 }
 
 export function resetApiBase(): void {
   removeKey(CONFIG.storage.apiBase);
+  notifyApiBaseChanged();
 }
 
 /**

@@ -1,5 +1,11 @@
+import { CONFIG } from '../config';
 import type { Product } from '../types';
-import { normalizeApiBase, readApiBase } from './apiBase';
+import {
+  hasApiBaseOverride,
+  normalizeApiBase,
+  readApiBase,
+  resetApiBase,
+} from './apiBase';
 
 // Адрес вычисляется на каждый запрос: его можно поменять из админки
 // (поле API BASE), не пересобирая сайт.
@@ -52,7 +58,7 @@ export async function pingServer(base: string, timeoutMs = 6000): Promise<boolea
 }
 
 /** Каталог с сервера. null — сервер недоступен (сайт работает в локальном режиме). */
-export async function fetchRemoteCatalog(): Promise<RemoteCatalog | null> {
+async function readRemoteCatalog(): Promise<RemoteCatalog | null> {
   try {
     const response = await request('/api/catalog');
     if (!response.ok) return null;
@@ -64,6 +70,20 @@ export async function fetchRemoteCatalog(): Promise<RemoteCatalog | null> {
   } catch {
     return null;
   }
+}
+
+export async function fetchRemoteCatalog(): Promise<RemoteCatalog | null> {
+  const primary = await readRemoteCatalog();
+  if (primary) return primary;
+
+  // В localStorage мог остаться старый домен ngrok. Пробуем адрес из сборки
+  // (VITE_API_URL) и забываем нерабочую ссылку, чтобы клиент не «залипал».
+  if (hasApiBaseOverride() && CONFIG.apiBase) {
+    resetApiBase();
+    return readRemoteCatalog();
+  }
+
+  return null;
 }
 
 export async function remoteLogin(login: string, password: string): Promise<string | null> {

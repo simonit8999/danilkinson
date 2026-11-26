@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import { useCatalog } from '../context/CatalogContext';
 import { pingServer } from '../lib/api';
+import { resolveAssetUrl } from '../lib/assets';
 import { copyText } from '../lib/clipboard';
 import type { Product } from '../types';
 
@@ -19,7 +20,9 @@ const EMPTY_FORM: FormState = {
   name: '',
   price: '',
   description: '',
-  images: 'https://picsum.photos/id/100/600/600',
+  // Пусто: если фото одно, админ заполняет только «Главное фото»,
+  // и оно же попадёт в галерею товара.
+  images: '',
   cover: '',
   soldOut: false,
 };
@@ -216,12 +219,16 @@ export default function AdminPanel() {
       .map((value) => value.trim())
       .filter(Boolean);
 
+    const cover = form.cover.trim() || undefined;
+
     saveProduct({
       name,
       price,
       description: form.description.trim(),
-      images: images.length ? images : ['https://picsum.photos/id/100/600/600'],
-      cover: form.cover.trim() || undefined,
+      images: images.length
+        ? images
+        : (cover ? [cover] : ['https://picsum.photos/id/100/600/600']),
+      cover,
       soldOut: form.soldOut,
       archived: editing ? editing.archived : false,
     }, editing?.id);
@@ -444,12 +451,13 @@ export default function AdminPanel() {
             {form.cover.trim() && (
               <img
                 className="admin-cover-preview"
-                src={form.cover.trim()}
+                src={resolveAssetUrl(form.cover.trim())}
                 alt="cover preview"
               />
             )}
             <p className="admin-hint">
               Необязательно. Если пусто — в каталоге показывается первое фото из списка.
+              Если заполнено только главное фото, оно же станет первым фото в галерее товара.
               Файлы кладите в public/images/products/ и пишите путь вида
               ./images/products/item.png. В каталоге фон прозрачный, в карточке товара —
               белая подложка с тонкой рамкой.

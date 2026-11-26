@@ -30,6 +30,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check API base
+        # Без VITE_API_URL Pages показывает статический каталог и не видит
+        # правки локального сервера. Это предупреждение, а не ошибка:
+        # сайт должен оставаться рабочим и в офлайн-режиме.
+        run: |
+          if [ -z "${{ vars.VITE_API_URL }}" ]; then
+            echo "::warning title=VITE_API_URL is not set::GitHub Pages will serve public/data/products.json. Admin changes on the local server will not reach buyers. Add the repository variable VITE_API_URL (see README)."
+          else
+            echo "API base: ${{ vars.VITE_API_URL }}"
+          fi
+
       - name: Typecheck and build
         # Админка на GitHub Pages должна знать адрес локального сервера (туннель ngrok).
         # Settings -> Secrets and variables -> Actions -> Variables:

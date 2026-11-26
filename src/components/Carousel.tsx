@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { resolveAssetUrl } from '../lib/assets';
 
 interface CarouselProps {
   images: string[];
@@ -47,7 +48,7 @@ export function Carousel({ images, name }: CarouselProps) {
         <div className="detail-carousel" ref={trackRef}>
           {images.map((src, index) => (
             <div className="detail-carousel-slide" key={`${src}-${index}`}>
-              <img src={src} alt={name} />
+              <img src={resolveAssetUrl(src)} alt={name} />
             </div>
           ))}
         </div>
