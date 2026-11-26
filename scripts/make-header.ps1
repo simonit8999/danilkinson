@@ -157,10 +157,18 @@ if ($Layout -eq 'border') {
 
 Draw-Part $g $corner 0 0 $cornerW $Height 0 0 540 $masterH
 
-$flipped = $corner.Clone()
-$flipped.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX)
-Draw-Part $g $flipped ($Width - $cornerW) 0 $cornerW $Height 0 0 540 $masterH
-$flipped.Dispose()
+# Правый угол — зеркало ЛЕВОЙ полосы (0..540), а не всего исходника.
+# Если отражать весь исходник и брать из него те же 0..540, в правый край
+# попадает собственный правый угол фото вместе с лозой правее него: завиток
+# уезжает влево от края и «висит» в воздухе. Зеркало левой полосы прижимает
+# завиток к правому краю, а лозу разворачивает внутрь — как у левого угла.
+$cornerSlice = $corner.Clone(
+  (New-Object System.Drawing.Rectangle(0, 0, 540, $masterH)),
+  $corner.PixelFormat
+)
+$cornerSlice.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX)
+Draw-Part $g $cornerSlice ($Width - $cornerW) 0 $cornerW $Height 0 0 540 $masterH
+$cornerSlice.Dispose()
 
 Draw-Part $g $centerImg $centerX 0 $centerW $Height $centerSrcX 0 $centerSrcW $masterH
 
