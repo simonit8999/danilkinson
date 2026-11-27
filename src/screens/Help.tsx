@@ -25,10 +25,13 @@ export function Help() {
 
   const refresh = async () => {
     setStatus('REFRESHING...');
-    const ok = await refreshCatalog();
-    setStatus(ok
-      ? 'DATA UPDATED.'
-      : 'SERVER DID NOT RESPOND — SHOWING SAVED DATA.');
+    const result = await refreshCatalog();
+
+    setStatus(result === 'server'
+      ? 'DATA UPDATED FROM SERVER.'
+      : result === 'published'
+        ? 'DATA UPDATED FROM PUBLISHED FILE.'
+        : 'SERVER OFFLINE — SHOWING SAVED DATA.');
   };
 
   const resetCache = async () => {

@@ -7,3 +7,4 @@ Thumbs.db
 .vite/
 .env
 server/data/backups/
+.preview/

@@ -77,6 +77,10 @@ export default function AdminPanel() {
   // поэтому на GitHub Pages (без адреса туннеля) API там нет — плашка покажет OFFLINE.
   const apiOrigin = apiBase || window.location.origin;
 
+  // GitHub Pages — статический хостинг: PUBLISH NOW пишет на сервер, но не
+  // обновляет public/data/products.json у посетителей. Предупреждаем сразу.
+  const staticPages = !apiBase && window.location.hostname.endsWith('.github.io');
+
   const [apiDraft, setApiDraft] = useState(apiBase);
   const [apiNotice, setApiNotice] = useState('');
 
@@ -340,6 +344,16 @@ export default function AdminPanel() {
 
         {apiNotice && <p className="admin-hint">{apiNotice}</p>}
       </div>
+
+      {staticPages && (
+        <div className="help-block">
+          <p>
+            STATIC MODE: PUBLISH NOW СОХРАНЯЕТ ТОЛЬКО НА СЕРВЕРЕ. GITHUB PAGES ОБНОВИТСЯ
+            ПОСЛЕ NPM RUN PUBLISH + COMMIT ИЛИ ПОСЛЕ НАСТРОЙКИ VITE_API_URL
+            (АДРЕС ТУННЕЛЯ NGROK).
+          </p>
+        </div>
+      )}
 
       {!loading && !serverOnline && (
         <div className="help-block">

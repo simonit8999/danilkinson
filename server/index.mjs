@@ -189,7 +189,7 @@ function validateProducts(raw) {
       id: String(item.id || `ua-${products.length + 1}`),
       name,
       price,
-      images: images.length ? images : [PLACEHOLDER],
+      images: images.length ? images : (cover ? [] : [PLACEHOLDER]),
       ...(cover ? { cover } : {}),
       description: typeof item.description === 'string' ? item.description : '',
       soldOut: item.soldOut === true,

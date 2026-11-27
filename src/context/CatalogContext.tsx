@@ -28,6 +28,9 @@ export type SyncState = 'idle' | 'saving' | 'saved' | 'offline' | 'error';
 /** Откуда взяты показанные товары. */
 export type CatalogSource = 'server' | 'cache' | 'published' | 'seed' | 'local';
 
+/** Итог REFRESH: откуда удалось взять каталог. */
+export type RefreshResult = 'server' | 'published' | 'offline';
+
 interface CatalogApi {
   products: Product[];
   visible: Product[];
@@ -43,8 +46,8 @@ interface CatalogApi {
   /** Адрес API: пусто = тот же origin (сайт открыт с сервера/туннеля). */
   apiBase: string;
   applyApiBase: (value: string) => Promise<boolean>;
-  /** Принудительно перечитать каталог с сервера (кнопка REFRESH). */
-  refreshCatalog: () => Promise<boolean>;
+  /** Принудительно перечитать каталог: сервер, затем опубликованный файл. */
+  refreshCatalog: () => Promise<RefreshResult>;
   saveProduct: (input: Omit<Product, 'id'>, id?: string) => void;
   deleteProduct: (id: string) => void;
   archiveProduct: (id: string) => void;
@@ -99,17 +102,32 @@ function readDraft(baseHash: string): LocalCatalog | null {
   return local;
 }
 
-async function fetchPublished(): Promise<{ list: Product[]; fromNetwork: boolean }> {
+/**
+ * Опубликованный статический каталог (public/data/products.json).
+ * Именно его отдаёт GitHub Pages: без VITE_API_URL клиент обязан читать
+ * этот файл, иначе после деплоя он показывает старый кеш.
+ * null — файл не прочитался (совсем офлайн).
+ */
+async function fetchPublishedList(): Promise<{ list: Product[]; updatedAt: string | null } | null> {
   try {
     const response = await fetch(CONFIG.dataUrl, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const list = normalizeProducts(await response.json());
     if (!list.length) throw new Error('EMPTY CATALOG');
-    return { list, fromNetwork: true };
+
+    // GitHub Pages и локальный сервер присылают Last-Modified — показываем
+    // его в HELP как дату обновления опубликованного файла.
+    const lastModified = response.headers.get('last-modified');
+    const stamped = lastModified ? new Date(lastModified) : null;
+    const updatedAt = stamped && !Number.isNaN(stamped.getTime())
+      ? stamped.toISOString()
+      : null;
+
+    return { list, updatedAt };
   } catch (error) {
-    console.warn('[catalog] published data unavailable, using seed', error);
-    return { list: normalizeProducts(seedProducts), fromNetwork: false };
+    console.warn('[catalog] published data unavailable', error);
+    return null;
   }
 }
 
@@ -250,40 +268,66 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   }, [rememberPublished]);
 
   /**
-   * Читает каталог с сервера. Возвращает true, если сервер ответил.
-   * Вызывается по таймеру и кнопкой REFRESH: изменения должны доезжать
-   * до уже открытых вкладок, а не только после перезагрузки.
+   * Перечитывает каталог. Сначала сервер, затем опубликованный статический
+   * файл (GitHub Pages). Вызывается по таймеру и кнопкой REFRESH: изменения
+   * должны доезжать до уже открытых вкладок, а не только после перезагрузки.
    */
-  const refreshCatalog = useCallback(async () => {
+  const refreshCatalog = useCallback(async (): Promise<RefreshResult> => {
     const remote = await fetchRemoteCatalog();
 
-    if (!remote) {
-      setServerOnline(false);
-      serverOnlineRef.current = false;
-      return false;
+    if (remote) {
+      setServerOnline(true);
+      serverOnlineRef.current = true;
+      if (remote.updatedAt) setServerUpdatedAt(remote.updatedAt);
+
+      const list = normalizeProducts(remote.products);
+      if (list.length) {
+        const hash = hashString(JSON.stringify(list));
+        if (hash !== publishedHashRef.current) {
+          applyServerCatalog(remote.products, remote.updatedAt ?? null);
+        } else if (!dirtyRef.current) {
+          setStale(false);
+        }
+      }
+
+      // Без токена писать нельзя: LOCAL ONLY остаётся, даже когда сервер жив.
+      if (sessionGet(CONFIG.storage.serverToken)) {
+        setSync((prev) => (prev === 'offline' || prev === 'error' ? 'idle' : prev));
+      }
+
+      return 'server';
     }
 
-    setServerOnline(true);
-    serverOnlineRef.current = true;
-    if (remote.updatedAt) setServerUpdatedAt(remote.updatedAt);
+    setServerOnline(false);
+    serverOnlineRef.current = false;
 
-    const list = normalizeProducts(remote.products);
-    if (!list.length) return true;
+    // API недоступен (Pages без VITE_API_URL): читаем опубликованный файл.
+    // Раньше здесь сразу отдавался кеш, и новый каталог «залипал» до RESET CACHE.
+    const publishedFile = await fetchPublishedList();
+    if (!publishedFile) return 'offline';
 
-    const hash = hashString(JSON.stringify(list));
-    if (hash !== publishedHashRef.current) {
-      applyServerCatalog(remote.products, remote.updatedAt ?? null);
-    } else if (!dirtyRef.current) {
-      setStale(false);
+    const hash = hashString(JSON.stringify(publishedFile.list));
+    if (hash === publishedHashRef.current) {
+      if (!dirtyRef.current) setStale(false);
+      if (publishedFile.updatedAt) setServerUpdatedAt(publishedFile.updatedAt);
+      return 'published';
     }
 
-    // Без токена писать нельзя: LOCAL ONLY остаётся, даже когда сервер жив.
-    if (sessionGet(CONFIG.storage.serverToken)) {
-      setSync((prev) => (prev === 'offline' || prev === 'error' ? 'idle' : prev));
+    rememberPublished(publishedFile.list);
+
+    // Неопубликованные правки админа не перетираем — только помечаем stale.
+    if (dirtyRef.current) {
+      setStale(true);
+      return 'published';
     }
 
-    return true;
-  }, [applyServerCatalog]);
+    writeCatalogCache(publishedFile.list, publishedFile.updatedAt);
+    setServerUpdatedAt(publishedFile.updatedAt);
+    setProducts(publishedFile.list);
+    setStale(false);
+    setSource('published');
+    return 'published';
+  }, [applyServerCatalog, rememberPublished]);
 
   useEffect(() => {
     let alive = true;
@@ -323,7 +367,34 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         serverOnlineRef.current = false;
       }
 
-      // Сервер не ответил: показываем последние известные данные,
+      // Сервер не ответил. Сначала опубликованный файл: после деплоя Pages он
+      // свежее кеша, поэтому новые товары/фото подхватываются без RESET CACHE.
+      const publishedFile = await fetchPublishedList();
+      if (!alive) return;
+
+      if (publishedFile) {
+        const hash = rememberPublished(publishedFile.list);
+        const draft = readDraft(hash);
+
+        if (draft) {
+          setProducts(draft.products);
+          setDirty(true);
+          dirtyRef.current = true;
+          setSource('local');
+          setLoading(false);
+          return;
+        }
+
+        removeKey(CONFIG.storage.catalog);
+        writeCatalogCache(publishedFile.list, publishedFile.updatedAt);
+        setServerUpdatedAt(publishedFile.updatedAt);
+        setProducts(publishedFile.list);
+        setSource('published');
+        setLoading(false);
+        return;
+      }
+
+      // Совсем офлайн: показываем последние известные данные,
       // а не пустой экран и не встроенный демо-каталог.
       const cached = readCatalogCache();
       const cachedHash = cached ? hashString(JSON.stringify(cached.products)) : '';
@@ -346,12 +417,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { list, fromNetwork } = await fetchPublished();
-      if (!alive) return;
-
-      rememberPublished(list);
-      setProducts(list);
-      setSource(fromNetwork ? 'published' : 'seed');
+      // Первый запуск без сети: встроенный демо-каталог.
+      const seed = normalizeProducts(seedProducts);
+      rememberPublished(seed);
+      setProducts(seed);
+      setSource('seed');
       setLoading(false);
     })();
 
@@ -378,6 +448,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     };
 
     const id = setInterval(() => void check(), 15000);
+    // Первая проверка сразу: после деплоя Pages открытая вкладка/PWA
+    // подтянет новый products.json, не дожидаясь 15 секунд.
+    void check();
     window.addEventListener('online', check);
     window.addEventListener('focus', check);
     document.addEventListener('visibilitychange', check);

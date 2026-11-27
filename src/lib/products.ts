@@ -45,6 +45,13 @@ export function normalizeProduct(raw: unknown, index: number): Product | null {
   const coverRaw = typeof data.cover === 'string' ? data.cover.trim() : '';
   const cover = coverRaw && isSafeImageUrl(coverRaw) ? coverRaw : undefined;
 
+  const parsedImages = parseImages(data.images ?? data.image);
+  // parseImages подставляет заглушку, когда фото нет. Если заполнено главное
+  // фото, заглушка в галерее не нужна: иначе вторым слайдом остаётся picsum.
+  const images = cover
+    ? parsedImages.filter((src) => src !== PLACEHOLDER_IMAGE)
+    : parsedImages;
+
   const soldOut = data.soldOut === true
     || data.soldOut === 1
     || data.soldOut === 'true'
@@ -60,7 +67,7 @@ export function normalizeProduct(raw: unknown, index: number): Product | null {
     id: String(data.id ?? `ua-${index + 1}`),
     name,
     price,
-    images: parseImages(data.images ?? data.image),
+    images,
     cover,
     description: String(data.description ?? data.desc ?? ''),
     soldOut,

@@ -14,6 +14,7 @@ import {
 } from 'react-router-dom';
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import { CatalogProvider } from './context/CatalogContext';
+import { bindBackgroundScroll } from './lib/backgroundScroll';
 import { Archive } from './screens/Archive';
 import { Catalog } from './screens/Catalog';
 import { Detail } from './screens/Detail';
@@ -29,7 +30,8 @@ const HEADER_WIDE = asset('images/site/header-wide.png');
 const HEADER_MOBILE = asset('images/site/header-mobile.png');
 const HEADER_IMAGE = asset('images/site/header-banner.png');
 const HEADER_DESKTOP_QUERY = '(min-width: 900px)';
-const BACKGROUND_IMAGE = asset('images/site/site-bg.jpg');
+// Бесшовный по вертикали тайл ткани (scripts/build-bg.ps1): 704x3776.
+const BACKGROUND_IMAGE = asset('images/site/site-bg-tile.webp');
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
 
@@ -74,7 +76,18 @@ function Shell() {
   const { grantEntry } = useAdmin();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
   const taps = useRef({ count: 0, last: 0 });
+
+  // Фон тянется за прокруткой любого экрана: тайл бесшовный и повторяется
+  // по вертикали, поэтому каталог можно листать бесконечно.
+  useEffect(() => {
+    const area = containerRef.current;
+    const layer = bgRef.current;
+    if (!area || !layer) return;
+
+    return bindBackgroundScroll(area, layer);
+  }, []);
 
   // Единственный вход в кабинет: три нажатия подряд по верхней плашке.
   // Плавающей кнопки [ ADMIN ] нет вообще — ни до входа, ни после.
@@ -107,11 +120,14 @@ function Shell() {
   // нажатием по верхней плашке.
   return (
     <>
-      <div
-        className="app-bg"
-        aria-hidden="true"
-        style={{ backgroundImage: `url("${BACKGROUND_IMAGE}")` }}
-      />
+      <div className="app-bg" aria-hidden="true">
+        <div
+          className="app-bg-texture"
+          ref={bgRef}
+          style={{ backgroundImage: `url("${BACKGROUND_IMAGE}")` }}
+        />
+        <div className="app-bg-grain" />
+      </div>
 
       <div className="scroll-area" ref={containerRef}>
         <header className="app-header">

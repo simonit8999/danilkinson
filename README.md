@@ -33,7 +33,8 @@ public/                  копируется в сборку как есть
   sw.js                  service worker
   icons/                 иконки PWA/Apple/вкладки (генерируются из аватарки)
 scripts/                 вспомогательные скрипты (в сборку не попадают):
-                         make-icons.ps1 (иконки), api-check.mjs (проверка сервера)
+                         make-icons.ps1 (иконки), build-bg.ps1 (фон),
+                         api-check.mjs (проверка сервера)
 server/                  локальный сервер каталога (статика dist + API) и publish.mjs
 shared/admin-hashes.json хеши админов: читают и сайт, и сервер
 .env.example             PORT / HOST / VITE_API_URL
@@ -53,6 +54,7 @@ npm run start      # build + server одной командой
 npm run check      # проверка API сервера (health, catalog, preflight)
 npm run tunnel     # ngrok http 3000 (доступ из интернета)
 npm run publish    # server/data/products.json -> public/data/products.json
+npm run bg         # новый фон: "Задний фон 2.0.png" -> бесшовный тайл WebP
 ```
 
 Нужен Node.js >= 22.12 (требование Vite 8).

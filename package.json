@@ -14,6 +14,7 @@
     "publish": "node server/publish.mjs",
     "hash-admin": "node scripts/hash-admin.mjs",
     "icons": "powershell -ExecutionPolicy Bypass -File scripts/make-icons.ps1",
+    "bg": "powershell -ExecutionPolicy Bypass -File scripts/build-bg.ps1",
     "check": "node scripts/api-check.mjs",
     "tap-check": "node scripts/tap-check.mjs"
   },

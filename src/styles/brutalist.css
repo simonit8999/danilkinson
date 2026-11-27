@@ -13,6 +13,29 @@
       --photo-frame-color: #000000;
       --photo-frame-pad: 10px;
       --photo-frame-image: none;
+
+      /* ----- GLASS (BUY / BACK): матовое стекло поверх ткани ----- */
+      --glass-bg: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.58) 0%,
+        rgba(255, 255, 255, 0.22) 48%,
+        rgba(255, 255, 255, 0.38) 100%
+      );
+      --glass-bg-hover: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.78) 0%,
+        rgba(255, 255, 255, 0.34) 60%,
+        rgba(255, 255, 255, 0.5) 100%
+      );
+      --glass-border: rgba(255, 255, 255, 0.85);
+      --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+      --glass-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.16), 0 3px 8px rgba(0, 0, 0, 0.08);
+      --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+      --glass-inset-active: inset 0 2px 6px rgba(0, 0, 0, 0.14);
+      --glass-blur: blur(14px) saturate(170%);
+      --glass-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+      --glass-radius: 8px;
     }
 
     html {
@@ -42,14 +65,44 @@
     }
 
     /* ----- FULLSCREEN BACKGROUND ----- */
+    /* Фон = бесшовный тайл ткани + зерно + лёгкая вуаль.
+       Тайл повторяется по вертикали бесконечно, а его сдвиг при прокрутке
+       задаёт src/lib/backgroundScroll.ts (transform слоя). */
     .app-bg {
       position: fixed;
       inset: 0;
       z-index: 0;
+      overflow: hidden;
       background-color: var(--paper);
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
+      pointer-events: none;
+      isolation: isolate;
+    }
+
+    .app-bg-texture {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      /* Выше вьюпорта на высоту тайла: низ не оголяется при сдвиге вверх. */
+      height: calc(100% + var(--bg-tile, 0px));
+      background-repeat: repeat-y;
+      background-position: 50% 0;
+      background-size: 100% auto;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+
+    /* Зерно: маскирует растяжение исходника на больших экранах и добавляет
+       микроконтраст поверхности. */
+    .app-bg-grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.07;
+      mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 160px 160px;
       pointer-events: none;
     }
 
@@ -57,12 +110,25 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(250, 247, 241, 0.34) 0%,
-        rgba(250, 247, 241, 0.52) 45%,
-        rgba(250, 247, 241, 0.7) 100%
-      );
+      pointer-events: none;
+      background:
+        radial-gradient(
+          120% 80% at 50% 0%,
+          rgba(250, 247, 241, 0.08),
+          rgba(250, 247, 241, 0.22) 70%,
+          rgba(250, 247, 241, 0.3) 100%
+        ),
+        linear-gradient(
+          180deg,
+          rgba(250, 247, 241, 0.1) 0%,
+          rgba(250, 247, 241, 0.2) 100%
+        );
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .app-bg-texture {
+        transform: none !important;
+      }
     }
 
     /* ----- TYPOGRAPHY ----- */
@@ -480,9 +546,10 @@
 
     .order-btn {
       width: 100%;
-      background: #000;
-      color: #fff;
-      border: none;
+      background: var(--glass-bg);
+      color: #000;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--glass-radius) !important;
       font-family: 'Anton', sans-serif;
       font-size: 20px;
       letter-spacing: 2px;
@@ -490,20 +557,42 @@
       text-transform: uppercase;
       cursor: pointer;
       margin-top: 8px;
-      border: 2px solid #000;
-      transition: none;
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-inset), var(--glass-shadow);
+      text-shadow: var(--glass-text-shadow);
+      transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     }
 
     .order-btn:hover {
-      background: #222;
+      background: var(--glass-bg-hover);
+      box-shadow: var(--glass-inset), var(--glass-shadow-hover);
+      transform: translateY(-1px);
     }
 
-    /* disabled / sold out state */
+    .order-btn:active {
+      transform: translateY(0);
+      box-shadow: var(--glass-inset-active);
+    }
+
+    .order-btn:focus-visible {
+      outline: 2px solid rgba(0, 0, 0, 0.55);
+      outline-offset: 3px;
+    }
+
+    /* disabled / sold out state: приглушённое стекло без hover */
     .order-btn:disabled {
-      background: #888 !important;
-      color: #fff !important;
-      border-color: #888 !important;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0.18) 100%
+      ) !important;
+      color: rgba(0, 0, 0, 0.45) !important;
+      border-color: rgba(255, 255, 255, 0.6) !important;
+      box-shadow: var(--glass-inset) !important;
+      text-shadow: none !important;
       cursor: not-allowed !important;
+      transform: none !important;
     }
 
     /* ----- MODAL (order comment) ----- */
@@ -854,12 +943,13 @@ body {
   padding-bottom: 80px;
 }
 
-/* ----- CARD QUICK ORDER BUTTON ----- */
+/* ----- CARD QUICK ORDER BUTTON (glass) ----- */
 .card-order-btn {
   width: 100%;
-  background: #000;
-  color: #fff;
-  border: 0;
+  background: var(--glass-bg);
+  color: #000;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px !important;
   font-family: 'Anton', sans-serif;
   font-size: clamp(9px, 0.8vw, 11px);
   letter-spacing: 1.6px;
@@ -869,12 +959,24 @@ body {
   text-transform: uppercase;
   cursor: pointer;
   white-space: nowrap;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-inset), var(--glass-shadow);
+  text-shadow: var(--glass-text-shadow);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 .card-order-btn:hover {
-  background: #222;
+  background: var(--glass-bg-hover);
+  box-shadow: var(--glass-inset), var(--glass-shadow-hover);
+  transform: translateY(-1px);
 }
 .card-order-btn:active {
-  background: #333;
+  transform: translateY(0);
+  box-shadow: var(--glass-inset-active);
+}
+.card-order-btn:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.55);
+  outline-offset: 2px;
 }
 
 /* ----- ADMIN: COVER PREVIEW ----- */
@@ -1114,9 +1216,10 @@ body::-webkit-scrollbar,
 }
 
 .detail-back {
-  background: #fff;
+  background: var(--glass-bg);
   color: #000;
-  border: 3px solid #000;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius) !important;
   font-family: 'Anton', sans-serif;
   font-size: 14px;
   letter-spacing: 1.5px;
@@ -1124,17 +1227,61 @@ body::-webkit-scrollbar,
   padding: 10px 16px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: none;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-inset), var(--glass-shadow);
+  text-shadow: var(--glass-text-shadow);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .detail-back:hover {
-  background: #000;
-  color: #fff;
+  background: var(--glass-bg-hover);
+  color: #000;
+  box-shadow: var(--glass-inset), var(--glass-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .detail-back:active {
-  background: #333;
-  color: #fff;
+  transform: translateY(0);
+  box-shadow: var(--glass-inset-active);
+}
+
+.detail-back:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.55);
+  outline-offset: 3px;
+}
+
+/* ----- GLASS FALLBACK: браузеры без backdrop-filter ----- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card-order-btn,
+  .order-btn,
+  .detail-back {
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  .card-order-btn:hover,
+  .order-btn:hover,
+  .detail-back:hover {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .order-btn:disabled {
+    background: rgba(255, 255, 255, 0.55) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-order-btn,
+  .order-btn,
+  .detail-back {
+    transition: none;
+  }
+
+  .card-order-btn:hover,
+  .order-btn:hover,
+  .detail-back:hover {
+    transform: none;
+  }
 }
 
 @media (min-width: 900px) {

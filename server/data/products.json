@@ -42,9 +42,7 @@
     "id": "ua-mwwbg4rc",
     "name": "Juicy Couture",
     "price": "500 000",
-    "images": [
-      "https://picsum.photos/id/100/600/600"
-    ],
+    "images": [],
     "cover": "https://app.mozg.world/media/cNxgoZ4DTaRuEOEkqsVI6GzSiqxynGb0_dadfc29be2ccf9cf.png",
     "description": "да ну",
     "soldOut": true,
@@ -54,9 +52,7 @@
     "id": "ua-mwwbehpd",
     "name": "EXCLUSIVE CONVERSE Studded spike",
     "price": "4000р",
-    "images": [
-      "https://picsum.photos/id/100/600/600"
-    ],
+    "images": [],
     "cover": "https://app.mozg.world/media/ShZa_SYK_JYEylpR4exqCL0AuU3Qe2Ac_dadfc29be2ccf9cf.png",
     "description": "",
     "soldOut": false,

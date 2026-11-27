@@ -1,4 +1,4 @@
-const CACHE = 'ua-pwa-v7';
+const CACHE = 'ua-pwa-v8';
 
 const SHELL = [
   './',
@@ -8,7 +8,7 @@ const SHELL = [
   './images/site/header-wide.png',
   './images/site/header-mobile.png',
   './images/site/header-banner.png',
-  './images/site/site-bg.jpg',
+  './images/site/site-bg-tile.webp',
   './icons/icon-32.png',
   './icons/icon-48.png',
   './icons/icon-192.png',
