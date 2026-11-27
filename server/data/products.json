@@ -1,0 +1,109 @@
+[
+  {
+    "id": "ua-mwzcgpzb",
+    "name": "винтаж олимпийка Adidas розовая с орнаментом",
+    "price": "40000 $",
+    "images": [
+      "https://app.mozg.world/media/Xa_er8HaypMnCQleK0CduTXxjsmLbfZd_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/Xa_er8HaypMnCQleK0CduTXxjsmLbfZd_dadfc29be2ccf9cf.png",
+    "description": "size: m\n\ncond: 10/10",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-mwzcchej",
+    "name": "BALENCIAGA Two sided sweatpants",
+    "price": "$ 6000",
+    "images": [
+      "https://app.mozg.world/media/DhR3UDSBFmyRdFIe_dAfuBOlpXGcaN4e_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/DhR3UDSBFmyRdFIe_dAfuBOlpXGcaN4e_dadfc29be2ccf9cf.png",
+    "description": "Бля жопу ставлю последняя осталась",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-mwzca1fm",
+    "name": "NUMBER (N)INE hoodies",
+    "price": "3600 $",
+    "images": [
+      "https://app.mozg.world/media/hA5Qqe9U7u_140ODIClWXdMBWRRB60_w_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/hA5Qqe9U7u_140ODIClWXdMBWRRB60_w_dadfc29be2ccf9cf.png",
+    "description": "Примерный срок доставки: 20+ дней",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-mwzc8htj",
+    "name": "MARTINE ROSE Hybrid Leopard Track jacket",
+    "price": "49 $",
+    "images": [
+      "https://app.mozg.world/media/yYdMcqJvx0634DuSqQXYpjdgr1Aybj7k_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/yYdMcqJvx0634DuSqQXYpjdgr1Aybj7k_dadfc29be2ccf9cf.png",
+    "description": "Примерный срок доставки: 20+ дней",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-mwxhjrji",
+    "name": "MAISON MARGIELA Replica / Gats (hand painted)",
+    "price": "$ 50+",
+    "images": [
+      "https://app.mozg.world/media/65ijNNKhl3nYXaHgIj5oM_nPrIeErE1c_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/65ijNNKhl3nYXaHgIj5oM_nPrIeErE1c_dadfc29be2ccf9cf.png",
+    "description": "Примерный срок доставки: 20+ дней",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-mwxhgmor",
+    "name": "Diesel half text",
+    "price": "$ 55",
+    "images": [
+      "https://app.mozg.world/media/XIiuTtiptNVXLmPoI2qrFkKif_ET99Id_dadfc29be2ccf9cf.png"
+    ],
+    "cover": "https://app.mozg.world/media/XIiuTtiptNVXLmPoI2qrFkKif_ET99Id_dadfc29be2ccf9cf.png",
+    "description": "size: 39 (фит до 43)\n\ncond: 8/10",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-mwxhdude",
+    "name": "EXCLUSIVE CONVERSE Studded",
+    "price": "$ 5600",
+    "images": [
+      "https://i.postimg.cc/66RZJCb8/photo-1-2026-11-26-14-34-49.jpg",
+      "https://i.postimg.cc/gjPnkBth/photo-2-2026-11-26-14-34-49.jpg",
+      "https://i.postimg.cc/J0WG4dYZ/photo-3-2026-11-26-14-34-49.jpg",
+      "https://i.postimg.cc/8cVjPnXt/photo-4-2026-11-26-14-34-49.jpg"
+    ],
+    "cover": "https://app.mozg.world/media/R__u4MD3_nn154otQ2zQbBz_Xa3yYuLf_dadfc29be2ccf9cf.png",
+    "description": "🌟Кеды в России, не нужно ждать доставки 🌟\nsizes: 38-45\ncond: NEW",
+    "soldOut": false,
+    "archived": false
+  },
+  {
+    "id": "ua-mwwbg4rc",
+    "name": "Juicy Couture",
+    "price": "500 000",
+    "images": [],
+    "cover": "https://app.mozg.world/media/cNxgoZ4DTaRuEOEkqsVI6GzSiqxynGb0_dadfc29be2ccf9cf.png",
+    "description": "да ну",
+    "soldOut": true,
+    "archived": false
+  },
+  {
+    "id": "ua-mwwbehpd",
+    "name": "EXCLUSIVE CONVERSE Studded spike",
+    "price": "4000р",
+    "images": [],
+    "cover": "https://app.mozg.world/media/ShZa_SYK_JYEylpR4exqCL0AuU3Qe2Ac_dadfc29be2ccf9cf.png",
+    "description": "",
+    "soldOut": false,
+    "archived": false
+  }
+]
