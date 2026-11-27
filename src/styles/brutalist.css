@@ -40,6 +40,22 @@
       --glass-blur-heavy: blur(30px) saturate(190%);
       --nav-height: 56px;
       --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
+
+      /* ----- HEADER GLASS ----- */
+      --header-logo-height: clamp(42px, 5.2vw, 56px);
+      --header-glass: rgba(255, 255, 255, 0.7);
+      --header-blur: blur(20px) saturate(180%);
+      --header-hairline: rgba(0, 0, 0, 0.05);
+      --header-offset: calc(env(safe-area-inset-top, 0px) + var(--header-logo-height) + 22px);
+
+      /* ----- CAROUSEL & NAV PILLS ----- */
+      --radius-photo: clamp(14px, 2vw, 22px);
+      --radius-pill: 999px;
+      --carousel-arrow: rgba(166, 137, 99, 0.5);
+      --carousel-arrow-hover: rgba(141, 112, 76, 0.9);
+      --nav-glass: rgba(255, 255, 255, 0.7);
+      --nav-pill-bg: rgba(255, 255, 255, 0.55);
+      --nav-pill-bg-active: rgba(255, 255, 255, 0.85);
     }
 
     html {
@@ -144,11 +160,11 @@
     }
 
     /* ----- LAYOUT & UTILS ----- */
-    /* ----- SCROLL AREA (плашка + контент, плашка уезжает при скролле) ----- */
+    /* ----- SCROLL AREA (плашка + контент, плашка закреплена сверху) ----- */
     .scroll-area {
       flex: 1;
       min-height: 0;
-      padding-top: var(--header-safe);
+      padding-top: 0; /* safe-area учтена внутри .app-header */
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
@@ -178,35 +194,39 @@
       animation: fadeIn 0.2s ease-in-out;
     }
 
-    /* ----- TOP BANNER (full width, в потоке: уезжает при скролле) ----- */
+    /* ----- TOP BANNER (стеклянная плашка: sticky, без текстуры и орнамента) ----- */
     .app-header {
-      position: relative;
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
-      padding: 0;
-      background: transparent;
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) clamp(12px, 2vw, 20px) 8px;
+      background: var(--header-glass);
+      -webkit-backdrop-filter: var(--header-blur);
+      backdrop-filter: var(--header-blur);
       border: 0;
-      overflow: hidden;
-      z-index: 2;
+      border-bottom: 1px solid var(--header-hairline);
+      box-shadow: none;
+      overflow: visible;
     }
 
-    .app-header picture {
+    .app-header-logo {
       display: block;
-      width: 100%;
-    }
-
-    .app-header img {
-      display: block;
-      width: 100%;
-      height: auto;
-      /* Телефон/планшет: плашка не выше 150px (на широком экране ПК — отдельная
-         широкая картинка, там высота и так ~110px). */
-      max-height: 150px;
+      height: var(--header-logo-height);
+      width: auto;
+      max-width: min(72vw, 320px);
+      margin: 0;
       padding: 0;
       object-fit: contain;
-      object-position: top center;
+      object-position: center;
       cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-user-drag: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
@@ -262,6 +282,11 @@
       object-fit: contain;
       object-position: center center;
       display: block;
+      /* Карточка без рамки: только аккуратные скругления. */
+      border-radius: clamp(10px, 1.2vw, 16px) !important;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
       transition: transform 0.25s ease, opacity 0.25s ease;
     }
 
@@ -438,14 +463,37 @@
       flex-direction: column;
     }
 
-    /* Одно фиксированное фото товара (без карусели) */
+    /* Карусель фото: без рамки, только скруглённые углы */
     .detail-photo {
+      position: relative;
       width: 100%;
       aspect-ratio: 1 / 1;
       margin: 0;
       background: transparent;
+      border: 0;
+      box-shadow: none;
+      border-radius: var(--radius-photo) !important;
       overflow: hidden;
       touch-action: pan-y pinch-zoom;
+    }
+
+    .detail-carousel-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      transition: transform 0.42s var(--ease-apple);
+    }
+
+    .detail-carousel-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
     }
 
     .detail-photo img {
@@ -454,7 +502,86 @@
       object-fit: contain;
       display: block;
       user-select: none;
+      -webkit-user-select: none;
       -webkit-user-drag: none;
+    }
+
+    /* Бежевые полупрозрачные стрелки: ни фона, ни рамки */
+    .detail-carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(34px, 4.6vw, 48px);
+      height: clamp(34px, 4.6vw, 48px);
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-pill) !important;
+      background: transparent;
+      box-shadow: none;
+      color: var(--carousel-arrow);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: clamp(28px, 3.4vw, 40px);
+      font-weight: 300;
+      line-height: 1;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .detail-carousel-arrow:hover {
+      background: transparent;
+      color: var(--carousel-arrow-hover);
+    }
+
+    .detail-carousel-arrow:active {
+      opacity: 0.7;
+    }
+
+    .detail-carousel-arrow:focus-visible {
+      outline: 1px solid var(--hairline-strong);
+      outline-offset: 2px;
+    }
+
+    .detail-carousel-arrow-prev {
+      left: clamp(2px, 1vw, 10px);
+    }
+
+    .detail-carousel-arrow-next {
+      right: clamp(2px, 1vw, 10px);
+    }
+
+    .detail-carousel-dots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: clamp(8px, 1.4vw, 14px);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .detail-carousel-dot {
+      width: 6px;
+      height: 6px;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-pill) !important;
+      background: rgba(0, 0, 0, 0.18);
+      box-shadow: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s ease, transform 0.2s var(--ease-apple);
+    }
+
+    .detail-carousel-dot.active {
+      background: rgba(0, 0, 0, 0.55);
+      transform: scale(1.15);
     }
 
     .detail-photo-empty {
@@ -890,7 +1017,7 @@
       margin-top: 12px;
     }
 
-    /* ----- BOTTOM NAV (thin glass bar with slider) ----- */
+    /* ----- BOTTOM NAV (стекло + pill-вкладки + ползунок) ----- */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -899,10 +1026,12 @@
       z-index: 500;
       height: calc(var(--nav-height) + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);
-      background: var(--surface-nav);
-      -webkit-backdrop-filter: var(--glass-blur-heavy);
-      backdrop-filter: var(--glass-blur-heavy);
-      box-shadow: 0 -1px 0 var(--hairline), 0 -12px 32px rgba(0, 0, 0, 0.06);
+      background: var(--nav-glass);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      border: 0;
+      /* Общей длинной рамки нет: только мягкая тень под панелью. */
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
     }
 
     .bottom-nav-track {
@@ -923,10 +1052,10 @@
       font-family: 'Anton', sans-serif;
       font-size: clamp(10px, 0.9vw, 13px);
       letter-spacing: 0.08em;
-      padding: 0 4px 10px;
+      padding: 0 2px 8px;
       cursor: pointer;
       text-transform: uppercase;
-      color: rgba(0, 0, 0, 0.5);
+      color: rgba(0, 0, 0, 0.48);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -935,23 +1064,44 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* Каждая вкладка — своя маленькая закруглённая «таблетка» */
+    .nav-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px clamp(8px, 1.2vw, 14px);
+      border-radius: var(--radius-pill) !important;
+      transition: background 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+    }
+
+    .bottom-nav button:hover .nav-label {
+      background: var(--nav-pill-bg);
+      box-shadow: inset 0 0 0 1px var(--header-hairline);
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .bottom-nav button:active .nav-label {
+      background: rgba(255, 255, 255, 0.72);
+      color: #000;
+    }
+
     .bottom-nav button.active {
       background: transparent;
       color: #000;
     }
 
-    .bottom-nav button:hover {
-      color: rgba(0, 0, 0, 0.78);
-    }
-
-    .bottom-nav button:active {
-      background: rgba(0, 0, 0, 0.04);
-      color: #000;
+    .bottom-nav button.active .nav-label {
+      background: var(--nav-pill-bg-active);
+      box-shadow: inset 0 0 0 1px var(--header-hairline);
     }
 
     .bottom-nav button:focus-visible {
       outline: none;
-      box-shadow: inset 0 0 0 1px var(--hairline-strong);
+    }
+
+    .bottom-nav button:focus-visible .nav-label {
+      outline: 1px solid var(--hairline-strong);
+      outline-offset: 1px;
     }
 
     /* Ползунок под активной вкладкой */
@@ -964,7 +1114,7 @@
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding-bottom: 6px;
+      padding-bottom: 5px;
       transform: translateX(calc(var(--nav-index, 0) * 100%));
       transition: transform 0.32s var(--ease-apple);
       pointer-events: none;
@@ -972,10 +1122,10 @@
 
     .nav-indicator::after {
       content: '';
-      width: 22px;
-      height: 3px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.82);
+      width: 20px;
+      height: 2px;
+      border-radius: var(--radius-pill) !important;
+      background: rgba(0, 0, 0, 0.72);
     }
 
     /* small screens */
@@ -983,11 +1133,15 @@
       .bottom-nav button {
         font-size: 11px;
         letter-spacing: 0.06em;
-        padding: 0 2px 9px;
+        padding: 0 1px 7px;
+      }
+
+      .nav-label {
+        padding: 5px 8px;
       }
 
       .nav-indicator {
-        padding-bottom: 5px;
+        padding-bottom: 4px;
       }
     }
   
@@ -1142,7 +1296,8 @@ body {
   .detail-gallery {
     grid-area: gallery;
     position: sticky;
-    top: 22px;
+    /* Держим галерею ниже закреплённой стеклянной плашки. */
+    top: var(--header-offset);
   }
 
   .detail-body {
@@ -1254,8 +1409,12 @@ body::-webkit-scrollbar,
     background: rgba(255, 255, 255, 0.55) !important;
   }
 
+  .app-header {
+    background: rgba(244, 239, 230, 0.97);
+  }
+
   .bottom-nav {
-    background: rgba(244, 239, 230, 0.94);
+    background: rgba(244, 239, 230, 0.96);
   }
 
   .modal-content {
@@ -1271,6 +1430,8 @@ body::-webkit-scrollbar,
   .order-btn,
   .detail-back,
   .nav-indicator,
+  .nav-label,
+  .detail-carousel-track,
   .modal-actions button {
     transition: none;
   }

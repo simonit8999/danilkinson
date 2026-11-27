@@ -32,6 +32,7 @@ export function ProductCard({ product, onOpen }: ProductCardProps) {
           className={product.soldOut ? 'sold-out-img' : undefined}
           loading="lazy"
           decoding="async"
+          draggable={false}
         />
         {product.soldOut && <div className="sold-out-badge">SOLD OUT</div>}
       </div>

@@ -27,12 +27,9 @@ import { SearchScreen } from './screens/Search';
 const FALLBACK_LOGO = 'https://i.postimg.cc/0NDs9xDf/u-a-top-Photoroom.png';
 
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`;
-// Плашка собрана из одной и той же картинки (scripts/make-header.ps1):
-// широкая и невысокая на ПК/планшете, компактная — на телефоне.
-const HEADER_WIDE = asset('images/site/header-wide.png');
-const HEADER_MOBILE = asset('images/site/header-mobile.png');
-const HEADER_IMAGE = asset('images/site/header-banner.png');
-const HEADER_DESKTOP_QUERY = '(min-width: 900px)';
+// Только логотип: прозрачный PNG без орнамента (scripts/make-header.ps1).
+// Широкая плашка с вензелями больше не используется — её заменяет стекло.
+const HEADER_LOGO = asset('images/site/header-mobile.png');
 // Бесшовный по вертикали тайл ткани (scripts/build-bg.ps1): 704x3776.
 const BACKGROUND_IMAGE = asset('images/site/site-bg-tile.webp');
 
@@ -191,29 +188,21 @@ function Shell() {
 
       <div className="scroll-area" ref={containerRef}>
         <header className="app-header">
-          <picture>
-            <source media={HEADER_DESKTOP_QUERY} srcSet={HEADER_WIDE} />
-            <img
-              src={HEADER_MOBILE}
-              alt="(undefined) archangel"
-              onClick={onLogoTap}
-              onError={(event) => {
-                const img = event.currentTarget;
-                const step = img.dataset.fallback ?? '0';
-
-                // 1) новая плашка не загрузилась — берём прежнюю целиком;
-                // 2) и она недоступна — запасной логотип.
-                if (step === '0') {
-                  img.dataset.fallback = '1';
-                  img.parentElement?.querySelectorAll('source').forEach((node) => node.remove());
-                  img.src = HEADER_IMAGE;
-                } else if (step === '1') {
-                  img.dataset.fallback = '2';
-                  img.src = FALLBACK_LOGO;
-                }
-              }}
-            />
-          </picture>
+          <img
+            className="app-header-logo"
+            src={HEADER_LOGO}
+            alt="(undefined) archangel"
+            draggable={false}
+            onClick={onLogoTap}
+            onError={(event) => {
+              const img = event.currentTarget;
+              // Логотип не загрузился — один раз подставляем запасной,
+              // чтобы не уйти в бесконечный цикл onError.
+              if (img.dataset.fallback === '1') return;
+              img.dataset.fallback = '1';
+              img.src = FALLBACK_LOGO;
+            }}
+          />
         </header>
 
         <div
@@ -256,7 +245,7 @@ function Shell() {
                 aria-current={active ? 'page' : undefined}
                 onClick={() => navigate(item.path)}
               >
-                {item.label}
+                <span className="nav-label">{item.label}</span>
               </button>
             );
           })}
