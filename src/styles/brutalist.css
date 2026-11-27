@@ -38,7 +38,7 @@
       --glass-inset-active: inset 0 2px 8px rgba(0, 0, 0, 0.12);
       --glass-blur: blur(20px) saturate(180%);
       --glass-blur-heavy: blur(30px) saturate(190%);
-      --nav-height: 56px;
+      --nav-height: 64px;
       --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
 
       /* ----- HEADER (полностью прозрачная плашка: только логотип) ----- */
@@ -50,8 +50,6 @@
       --radius-pill: 999px;
       --carousel-arrow: rgba(166, 137, 99, 0.5);
       --carousel-arrow-hover: rgba(141, 112, 76, 0.9);
-      --nav-glass: transparent;
-      /* Единая стеклянная полоса вкладок (см. .bottom-nav). */
 
       /* ----- LIQUID GLASS: BUTTONS (прозрачное стекло с бликом на гранях) ----- */
       --glass-btn-bg: rgba(255, 255, 255, 0.1);
@@ -59,17 +57,19 @@
       --glass-btn-border: rgba(255, 255, 255, 0.4);
       --glass-btn-blur: blur(12px) saturate(180%);
 
-      /* ----- BOTTOM NAV: одна бежевая стеклянная полоса на всех экранах ----- */
-      --nav-glass-bg: linear-gradient(
-        180deg,
-        rgba(244, 239, 230, 0.24) 0%,
-        rgba(240, 232, 219, 0.6) 42%,
-        rgba(236, 226, 211, 0.88) 100%
-      );
-      --nav-glass-blur: blur(24px) saturate(165%);
-      --nav-glass-border: rgba(166, 137, 99, 0.26);
-      --nav-text: rgba(64, 52, 38, 0.5);
-      --nav-text-hover: rgba(46, 34, 22, 0.8);
+      /* ----- BOTTOM NAV: прозрачная панель + стеклянные таблетки вкладок ----- */
+      /* Фон панели полностью прозрачный (см. .bottom-nav): сплошной полосы нет,
+         стекло живёт только в маленьких плашках под каждой подписью. */
+      --nav-pill-bg: rgba(255, 255, 255, 0.2);
+      --nav-pill-bg-hover: rgba(255, 255, 255, 0.3);
+      --nav-pill-bg-active: rgba(255, 255, 255, 0.4);
+      --nav-pill-border: rgba(255, 255, 255, 0.3);
+      --nav-pill-border-active: rgba(255, 255, 255, 0.55);
+      --nav-pill-blur: blur(15px) saturate(180%);
+      --nav-pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 22px rgba(74, 56, 34, 0.08);
+      --nav-pill-shadow-active: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 26px rgba(74, 56, 34, 0.12);
+      --nav-text: rgba(64, 52, 38, 0.62);
+      --nav-text-hover: rgba(46, 34, 22, 0.85);
       --nav-text-active: #2e2417;
 
       /* ----- ROUNDED SHOP GLASS: карточки, поля и кнопки ----- */
@@ -1249,7 +1249,7 @@
       box-shadow: var(--glass-inset-active);
     }
 
-    /* ----- BOTTOM NAV (одна бежевая стеклянная полоса на всех экранах) ----- */
+    /* ----- BOTTOM NAV (прозрачная панель + плавающие стеклянные таблетки) ----- */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -1257,39 +1257,23 @@
       right: 0;
       z-index: 500;
       height: calc(var(--nav-height) + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
-      /* Единое матовое бежевое стекло: контент плавно уходит под него,
-         а не выглядывает между отдельными плашками. */
-      background: var(--nav-glass-bg);
-      -webkit-backdrop-filter: var(--nav-glass-blur);
-      backdrop-filter: var(--nav-glass-blur);
+      padding: 12px clamp(8px, 1.6vw, 20px) calc(12px + env(safe-area-inset-bottom));
+      /* Сама панель полностью прозрачная: ни полосы, ни рамки, ни тени.
+         Контент свободно проезжает под ней, а стекло живёт только в плашках. */
+      background: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
       border: 0;
-      border-top: 1px solid var(--nav-glass-border);
-      box-shadow: 0 -18px 40px rgba(74, 56, 34, 0.08);
-      pointer-events: auto;
-    }
-
-    /* Мягкий верхний край: над полосой стекло растворяется в фоне. */
-    .bottom-nav::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 100%;
-      height: 18px;
-      background: linear-gradient(
-        180deg,
-        rgba(244, 239, 230, 0) 0%,
-        rgba(242, 234, 221, 0.14) 55%,
-        rgba(240, 232, 219, 0.3) 100%
-      );
+      box-shadow: none;
+      /* Пустая область не перехватывает нажатия и прокрутку:
+         кликабельны только сами таблетки. */
       pointer-events: none;
     }
 
     .bottom-nav-track {
       position: relative;
       display: flex;
-      align-items: stretch;
+      align-items: center;
       width: 100%;
       max-width: 1500px;
       height: 100%;
@@ -1299,9 +1283,9 @@
     .bottom-nav button {
       flex: 1;
       min-width: 0;
+      height: 100%;
       background: transparent;
       border: 0;
-      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
       font-size: clamp(10px, 0.9vw, 13px);
       letter-spacing: 0.08em;
@@ -1315,40 +1299,76 @@
       white-space: nowrap;
       transition: color 0.22s ease;
       -webkit-tap-highlight-color: transparent;
+      /* Таблетка внутри сама принимает нажатия (см. .nav-label). */
+      pointer-events: none;
     }
 
     .bottom-nav button:hover {
       color: var(--nav-text-hover);
     }
 
-    .bottom-nav button:active {
-      color: #000;
-    }
-
     .bottom-nav button.active {
-      background: transparent;
       color: var(--nav-text-active);
     }
 
-    /* Подпись вкладки: только текст — ни подложки, ни рамки, ни размытия. */
+    /* Таблетка вкладки: маленькое плавающее стекло с бликом по контуру.
+       Пока под панелью проезжает товар, он размывается и переливается. */
     .nav-label {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
-      background: transparent;
-      border: 0;
-      border-radius: 0 !important;
-      box-shadow: none;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
+      padding: 7px 18px 11px;
+      border-radius: var(--radius-pill) !important;
+      background: var(--nav-pill-bg);
+      border: 1px solid var(--nav-pill-border);
+      box-shadow: var(--nav-pill-shadow);
+      -webkit-backdrop-filter: var(--nav-pill-blur);
+      backdrop-filter: var(--nav-pill-blur);
+      cursor: pointer;
+      pointer-events: auto;
+      transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        color 0.22s ease,
+        transform 0.25s var(--ease-apple);
     }
 
-    .bottom-nav button:hover .nav-label,
+    .bottom-nav button:hover .nav-label {
+      background: var(--nav-pill-bg-hover);
+      border-color: var(--nav-pill-border-active);
+    }
+
+    .bottom-nav button:active .nav-label {
+      transform: scale(0.96);
+    }
+
     .bottom-nav button.active .nav-label {
-      background: transparent;
-      border-color: transparent;
-      box-shadow: none;
+      background: var(--nav-pill-bg-active);
+      border-color: var(--nav-pill-border-active);
+      box-shadow: var(--nav-pill-shadow-active);
+      font-weight: 700;
+    }
+
+    /* Ползунок-чёрточка под активной вкладкой (внутри таблетки). */
+    .nav-label::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 4px;
+      width: 16px;
+      height: 2px;
+      border-radius: var(--radius-pill) !important;
+      background: currentColor;
+      opacity: 0;
+      transform: translate(-50%, 2px) scaleX(0.4);
+      transition: opacity 0.25s ease, transform 0.3s var(--ease-apple);
+    }
+
+    .bottom-nav button.active .nav-label::after {
+      opacity: 0.8;
+      transform: translate(-50%, 0) scaleX(1);
     }
 
     .bottom-nav button:focus-visible {
@@ -1369,7 +1389,7 @@
       }
 
       .nav-label {
-        padding: 0;
+        padding: 6px 12px 10px;
       }
     }
   
@@ -1681,9 +1701,18 @@ body::-webkit-scrollbar,
     background: rgba(255, 255, 255, 0.55) !important;
   }
 
-  /* Единая бежевая полоса без размытия (браузер не умеет backdrop-filter). */
+  /* Панель остаётся прозрачной, а таблетки делаем плотнее, чтобы текст читался. */
   .bottom-nav {
-    background: rgba(240, 232, 219, 0.96);
+    background: transparent;
+  }
+
+  .nav-label {
+    background: rgba(255, 255, 255, 0.62);
+    border-color: rgba(255, 255, 255, 0.75);
+  }
+
+  .bottom-nav button.active .nav-label {
+    background: rgba(255, 255, 255, 0.84);
   }
 
   .modal-content {
@@ -1715,6 +1744,7 @@ body::-webkit-scrollbar,
   .order-btn,
   .detail-back,
   .nav-label,
+  .nav-label::after,
   .detail-carousel-track,
   .modal-actions button {
     transition: none;
