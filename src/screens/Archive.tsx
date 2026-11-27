@@ -3,13 +3,6 @@ import { FullscreenImage } from '../components/FullscreenImage';
 import { useCatalog } from '../context/CatalogContext';
 import { resolveAssetUrl } from '../lib/assets';
 
-const emptyStyle = {
-  gridColumn: '1/-1',
-  fontFamily: "'Courier New', monospace",
-  padding: '20px 0',
-  background: '#fff',
-} as const;
-
 export function Archive() {
   const { archived } = useCatalog();
   const [fullscreen, setFullscreen] = useState<string | null>(null);
@@ -20,7 +13,7 @@ export function Archive() {
 
       <div className="archive-grid">
         {archived.length === 0 ? (
-          <div style={emptyStyle}>ARCHIVE IS EMPTY.</div>
+          <div className="grid-empty">ARCHIVE IS EMPTY.</div>
         ) : archived.map((product) => {
           const image = resolveAssetUrl(product.cover || product.images[0]);
 

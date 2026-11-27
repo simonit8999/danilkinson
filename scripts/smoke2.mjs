@@ -57,13 +57,15 @@ async function tripleTapHeader(page) {
 
 await scenario('catalog', '/', '.product-card', async (page) => ({
   cards: await page.locator('.product-card').count(),
-  cardButtons: await page.locator('.card-order-btn').count(),
+  quickOrderButtons: await page.locator('.card-order-btn').count(),
   floatingAdminButton: await page.locator('#adminBtn').count(),
   manifest: await page.evaluate(() => document.querySelector('link[rel="manifest"]')?.getAttribute('href') ?? null),
 }));
 
-await scenario('card-order-modal', '/', '.product-card', async (page) => {
-  await page.locator('.card-order-btn').first().click();
+await scenario('detail-order-modal', '/', '.product-card', async (page) => {
+  await page.locator('.product-card').first().click();
+  await page.waitForSelector('.detail-photo');
+  await page.locator('.order-btn').click();
   await page.waitForSelector('.modal-overlay');
   const title = await page.locator('.modal-content h3').innerText();
   await page.locator('.modal-content .btn-cancel').last().click();
@@ -71,8 +73,9 @@ await scenario('card-order-modal', '/', '.product-card', async (page) => {
 });
 
 await scenario('detail', '/#/item/ua-001', '.order-btn', async (page) => ({
-  title: await page.locator('.screen-header').first().innerText(),
+  title: await page.locator('.detail-name').first().innerText(),
   orderButton: await page.locator('.order-btn').first().innerText(),
+  photos: await page.locator('.detail-photo').count(),
   slides: await page.locator('.detail-carousel-slide').count(),
 }));
 

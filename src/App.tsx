@@ -3,6 +3,8 @@ import {
   Suspense,
   useEffect,
   useRef,
+  type CSSProperties,
+  type TouchEvent,
 } from 'react';
 import {
   HashRouter,
@@ -15,6 +17,7 @@ import {
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { bindBackgroundScroll } from './lib/backgroundScroll';
+import { getSwipeDirection, isSwipeBlockedTarget } from './lib/swipe';
 import { Archive } from './screens/Archive';
 import { Catalog } from './screens/Catalog';
 import { Detail } from './screens/Detail';
@@ -32,6 +35,13 @@ const HEADER_IMAGE = asset('images/site/header-banner.png');
 const HEADER_DESKTOP_QUERY = '(min-width: 900px)';
 // Бесшовный по вертикали тайл ткани (scripts/build-bg.ps1): 704x3776.
 const BACKGROUND_IMAGE = asset('images/site/site-bg-tile.webp');
+
+const NAV_ITEMS = [
+  { key: 'catalog', path: '/', label: 'CATALOG' },
+  { key: 'archive', path: '/archive', label: 'ARCHIVE' },
+  { key: 'search', path: '/search', label: 'SEARCH' },
+  { key: 'help', path: '/help', label: 'HELP' },
+] as const;
 
 const AdminPanel = lazy(() => import('./screens/AdminPanel'));
 
@@ -116,6 +126,56 @@ function Shell() {
           ? 'help'
           : '';
 
+  const navIndex = NAV_ITEMS.findIndex((item) => item.key === nav);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+  // Свайпы между вкладками: Каталог -> Архив -> Поиск -> Помощь.
+  // На детальной странице и в админке navIndex === -1 — жесты не перехватываем,
+  // там работает собственный свайп «назад» в Detail.
+  const onSwipeStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (navIndex < 0 || event.touches.length !== 1 || isSwipeBlockedTarget(event.target)) {
+      swipeStart.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    swipeStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const onSwipeMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipeStart.current;
+    const touch = event.touches[0];
+    if (!start || !touch) return;
+
+    const dx = Math.abs(touch.clientX - start.x);
+    const dy = Math.abs(touch.clientY - start.y);
+
+    // Обычный вертикальный скролл отменяет жест.
+    if (dy > 12 && dy > dx) swipeStart.current = null;
+  };
+
+  const onSwipeEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || navIndex < 0) return;
+
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+
+    const direction = getSwipeDirection(start, { x: touch.clientX, y: touch.clientY });
+    if (!direction) return;
+
+    const targetIndex = direction === 'left'
+      ? Math.min(NAV_ITEMS.length - 1, navIndex + 1)
+      : Math.max(0, navIndex - 1);
+
+    if (targetIndex !== navIndex) navigate(NAV_ITEMS[targetIndex].path);
+  };
+
+  const onSwipeCancel = () => {
+    swipeStart.current = null;
+  };
+
   // Плавающая кнопка [ ADMIN ] удалена: в кабинет входят только тройным
   // нажатием по верхней плашке.
   return (
@@ -156,7 +216,13 @@ function Shell() {
           </picture>
         </header>
 
-        <div className="container">
+        <div
+          className="container"
+          onTouchStart={onSwipeStart}
+          onTouchMove={onSwipeMove}
+          onTouchEnd={onSwipeEnd}
+          onTouchCancel={onSwipeCancel}
+        >
           <ScrollToTop />
 
           <Routes>
@@ -172,34 +238,31 @@ function Shell() {
       </div>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        <button
-          type="button"
-          className={nav === 'catalog' ? 'active' : ''}
-          onClick={() => navigate('/')}
+        <div
+          className="bottom-nav-track"
+          style={{
+            '--nav-index': Math.max(0, navIndex),
+            '--nav-count': NAV_ITEMS.length,
+          } as CSSProperties}
         >
-          CATALOG
-        </button>
-        <button
-          type="button"
-          className={nav === 'archive' ? 'active' : ''}
-          onClick={() => navigate('/archive')}
-        >
-          ARCHIVE
-        </button>
-        <button
-          type="button"
-          className={nav === 'search' ? 'active' : ''}
-          onClick={() => navigate('/search')}
-        >
-          SEARCH
-        </button>
-        <button
-          type="button"
-          className={nav === 'help' ? 'active' : ''}
-          onClick={() => navigate('/help')}
-        >
-          HELP
-        </button>
+          {NAV_ITEMS.map((item) => {
+            const active = nav === item.key;
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={active ? 'active' : ''}
+                aria-current={active ? 'page' : undefined}
+                onClick={() => navigate(item.path)}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+
+          {navIndex >= 0 && <span className="nav-indicator" aria-hidden="true" />}
+        </div>
       </nav>
     </>
   );

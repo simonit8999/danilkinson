@@ -1,21 +1,21 @@
-import { useState } from 'react';
+import { useRef, useState, type TouchEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Carousel } from '../components/Carousel';
 import { OrderModal } from '../components/OrderModal';
 import { useCatalog } from '../context/CatalogContext';
+import { resolveAssetUrl } from '../lib/assets';
+import { getSwipeDirection, isSwipeBlockedTarget } from '../lib/swipe';
 
 export function Detail() {
   const { id } = useParams<{ id: string }>();
   const { products } = useCatalog();
   const navigate = useNavigate();
   const [orderOpen, setOrderOpen] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   const product = products.find((item) => item.id === id);
-  // Главное фото (cover) тоже показываем в галерее: админ часто заполняет
-  // только его, и страница товара не должна оставаться со старой заглушкой.
-  const gallery = product && product.cover && !product.images.includes(product.cover)
-    ? [product.cover, ...product.images]
-    : product?.images ?? [];
+  // Одно фиксированное фото: первое из images. cover — только запасной вариант,
+  // если админ заполнил исключительно обложку.
+  const photo = product?.images[0] || product?.cover;
 
   // Возврат в предыдущее меню (каталог / архив / поиск).
   // Если товар открыли по прямой ссылке, истории приложения нет — ведём в каталог.
@@ -23,6 +23,45 @@ export function Detail() {
     const state = window.history.state as { idx?: number } | null;
     if (state && typeof state.idx === 'number' && state.idx > 0) navigate(-1);
     else navigate('/');
+  };
+
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1 || isSwipeBlockedTarget(event.target)) {
+      touchStart.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const onTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    const touch = event.touches[0];
+    if (!start || !touch) return;
+
+    const dx = Math.abs(touch.clientX - start.x);
+    const dy = Math.abs(touch.clientY - start.y);
+
+    // Начался обычный вертикальный скролл — жест больше не считаем свайпом.
+    if (dy > 12 && dy > dx) touchStart.current = null;
+  };
+
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+
+    if (getSwipeDirection(start, { x: touch.clientX, y: touch.clientY }) === 'right') {
+      goBack();
+    }
+  };
+
+  const onTouchCancel = () => {
+    touchStart.current = null;
   };
 
   if (!product) {
@@ -45,7 +84,13 @@ export function Detail() {
   }
 
   return (
-    <div className="screen fade-in detail-screen">
+    <div
+      className="screen fade-in detail-screen"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+    >
       <div className="detail-topbar">
         <button className="detail-back" type="button" onClick={goBack}>
           ← BACK
@@ -56,7 +101,13 @@ export function Detail() {
         <h1 className="detail-name">{product.name}</h1>
 
         <div className="detail-gallery">
-          <Carousel images={gallery} name={product.name} />
+          {photo ? (
+            <figure className="detail-photo">
+              <img src={resolveAssetUrl(photo)} alt={product.name} decoding="async" />
+            </figure>
+          ) : (
+            <div className="detail-photo detail-photo-empty">NO PHOTO</div>
+          )}
         </div>
 
         <div className="detail-body">
@@ -84,3 +135,4 @@ export function Detail() {
     </div>
   );
 }
+

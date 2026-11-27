@@ -1,14 +1,13 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 import { resolveAssetUrl } from '../lib/assets';
 import type { Product } from '../types';
 
 interface ProductCardProps {
   product: Product;
   onOpen: () => void;
-  onOrder: () => void;
 }
 
-export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
+export function ProductCard({ product, onOpen }: ProductCardProps) {
   const cover = resolveAssetUrl(product.cover || product.images[0]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -16,11 +15,6 @@ export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
       event.preventDefault();
       onOpen();
     }
-  };
-
-  const onOrderClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    onOrder();
   };
 
   return (
@@ -47,11 +41,6 @@ export function ProductCard({ product, onOpen, onOrder }: ProductCardProps) {
           {product.name}
         </div>
         <div className="product-price">{product.price}</div>
-        {!product.soldOut && (
-          <button className="card-order-btn" type="button" onClick={onOrderClick}>
-            BUY
-          </button>
-        )}
       </div>
     </div>
   );
