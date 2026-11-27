@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { CONFIG } from '../config';
 import { seedProducts } from '../data/seed';
-import { fetchRemoteCatalog, putRemoteCatalog } from '../lib/api';
+import { fetchRemoteCatalog, forgetPreferredApiBase, putRemoteCatalog } from '../lib/api';
 import { API_BASE_CHANGED, detectApiBaseParam, readApiBase, saveApiBase } from '../lib/apiBase';
 import { readCatalogCache, writeCatalogCache } from '../lib/catalogCache';
 import { hashString, newProductId, normalizeProducts } from '../lib/products';
@@ -551,6 +551,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const next = saveApiBase(value);
     setApiBase(next);
     setSync('idle');
+    // Админ выбрал другой адрес — забываем прежний рабочий, иначе клиент
+    // продолжит ходить на старый сервер.
+    forgetPreferredApiBase();
 
     const remote = await fetchRemoteCatalog();
     if (!remote) {

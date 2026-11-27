@@ -34,7 +34,8 @@ public/                  копируется в сборку как есть
   icons/                 иконки PWA/Apple/вкладки (генерируются из аватарки)
 scripts/                 вспомогательные скрипты (в сборку не попадают):
                          make-icons.ps1 (иконки), build-bg.ps1 (фон),
-                         api-check.mjs (проверка сервера)
+                         api-check.mjs (проверка сервера),
+                         publish-check.mjs (проверка публикации каталога)
 server/                  локальный сервер каталога (статика dist + API) и publish.mjs
 shared/admin-hashes.json хеши админов: читают и сайт, и сервер
 .env.example             PORT / HOST / VITE_API_URL
@@ -134,9 +135,15 @@ npm run hash-admin -- <login> <password>
 
 - Если сайт открыт через локальный сервер (`npm run server` + ngrok), правки админа
   сохраняются в `server/data/products.json` автоматически и сразу видны покупателям.
-- Если покупатели открывают GitHub Pages, сборке нужен адрес сервера: задайте
-  `VITE_API_URL` (см. раздел «GitHub Pages: живые правки, офлайн и обновление»).
-  Без него Pages читает статический `public/data/products.json` и правок сервера не видит.
+- При каждом сохранении сервер обновляет и статическую копию
+  `public/data/products.json` — раньше это делал только ручной `npm run publish`,
+  поэтому копия отставала и покупатели на Pages видели старый каталог.
+  Закоммитьте и запушьте её (GitHub Desktop → Commit & push), чтобы Pages
+  пересобрался: это офлайн-фолбэк на случай выключенного сервера.
+- Сборка на GitHub Pages по умолчанию берёт каталог с постоянного домена туннеля
+  (`src/config.ts` → `DEFAULT_PUBLIC_API`), поэтому живые правки видны и на Pages,
+  без пересборки. Если домен ngrok сменится, поправьте эту константу или задайте
+  `VITE_PUBLIC_API_URL` (см. `.env.example`). `VITE_API_URL` имеет приоритет.
 - Без сервера правки хранятся в браузере (localStorage): Admin → `EXPORT JSON` →
   заменить `public/data/products.json` → commit/push (или `npm run publish`).
 - Фото товаров добавляются ссылкой (поле «URL изображений»); файлы можно положить
@@ -190,34 +197,44 @@ npm run publish     # копирует server/data/products.json в public/data/
 
 ## GitHub Pages: живые правки, офлайн и обновление приложения
 
-GitHub Pages отдаёт только статику, поэтому сборка должна знать адрес сервера:
+GitHub Pages отдаёт только статику, поэтому сборка должна знать адрес сервера.
+Адрес уже прописан по умолчанию — `DEFAULT_PUBLIC_API` в `src/config.ts`
+(постоянный домен ngrok). Поэтому Pages-клиенты ходят за каталогом на сервер
+через туннель и видят правки админки без пересборки сайта.
+
+Если нужен другой адрес (сменился домен ngrok, другой сервер):
 
 1. GitHub → Settings → Secrets and variables → Actions → **Variables** →
    New repository variable `VITE_API_URL` = `https://ВАШ-ДОМЕН.ngrok-free.dev`
-   (без слэша в конце).
+   (без слэша в конце). Он главнее адреса из `src/config.ts`;
+   `VITE_PUBLIC_API_URL` — то же самое, но без приоритета над `VITE_API_URL`.
 2. Домен должен быть постоянным: возьмите бесплатный статический домен в панели
    ngrok и запускайте `ngrok http --url=ВАШ-ДОМЕН.ngrok-free.dev 127.0.0.1:3000`.
-   Если домен меняется, Pages-клиенты откатятся на статический каталог.
+   Если домен меняется, поправьте `DEFAULT_PUBLIC_API` в `src/config.ts`.
 3. Перезапустите workflow **Deploy to GitHub Pages**. После этого правки каталога
    уходят в `server/data/products.json` через API и появляются у всех, у кого
    открыт сайт, максимум через 15 секунд — без пересборки Pages.
-4. Для офлайн-фолбэка (и если сервер выключен) синхронизируйте статическую копию:
-   `npm run publish`, затем commit `public/data/products.json`.
+4. Для офлайн-фолбэка (и если сервер выключен) статическая копия
+   `public/data/products.json` обновляется сервером сама при каждом сохранении:
+   закоммитьте её и запушьте. То же самое вручную делает `npm run publish`.
 
 Как клиент выбирает данные:
 
-`API → последний удачный снимок в localStorage → public/data/products.json → seed`.
+`API (туннель) → public/data/products.json → последний удачный снимок в localStorage → seed`.
 
 - API доступен — каталог и фото живые, снимок обновляется при каждом ответе.
-- API недоступен — показывается последний снимок, а на экране HELP:
+  Этот путь работает и на GitHub Pages: адрес API берётся из `src/config.ts`
+  (или `VITE_API_URL` / `VITE_PUBLIC_API_URL`), а нерабочий старый адрес из
+  поля API BASE автоматически забывается и заменяется следующим в списке.
+- API недоступен — показывается `public/data/products.json`, а на экране HELP:
   `SERVER OFFLINE — SHOWING SAVED DATA`, дата обновления и источник данных.
-- Снимка ещё нет — берётся `public/data/products.json`, затем `src/data/seed.ts`.
+- Файла ещё нет — берётся последний снимок из localStorage, затем `src/data/seed.ts`.
 - Открытые вкладки и установленное PWA обновляются сами: опрос раз в 15 секунд
   и повторная проверка при возврате в приложение.
 
 Кеш и обновление:
 
-- Service worker `ua-pwa-v7`: фото и `/data/products.json` отдаются network-first
+- Service worker `ua-pwa-v8`: фото и `/data/products.json` отдаются network-first
   (сеть → кеш), поэтому заменённый файл не «залипает»; старые кеши удаляются
   при активации новой версии.
 - При запуске приложение вызывает `registration.update()` и проверяет обновление
@@ -249,10 +266,11 @@ GitHub Pages отдаёт только статику, поэтому сборк
    `npm.cmd run check -- https://ВАШ-ДОМЕН.ngrok-free.dev`). Все строки должны быть `OK`:
    `GET /api/health`, `GET /api/catalog`, `GET /api/products`, `OPTIONS preflight`.
 3. Посмотрите в плашке строку `API: ...` — это адрес, куда клиент реально шлёт
-   `/api/*`. Если там адрес GitHub Pages (`https://USER.github.io`), значит сайт
-   открыт не с сервера: API на Pages нет. Решение — поле **API BASE** в админке:
-   вставьте ссылку туннеля и нажмите `SAVE API` (пересборка не нужна), либо
-   откройте сам сайт по ссылке туннеля.
+   `/api/*`. На GitHub Pages там должен быть постоянный домен туннеля
+   (`src/config.ts` → `DEFAULT_PUBLIC_API`, либо `VITE_API_URL`). Если там адрес
+   GitHub Pages (`https://USER.github.io`), значит сборка старая или адрес
+   сброшен: поле **API BASE** в админке (вставьте ссылку туннеля → `SAVE API`),
+   ссылка `?api=https://...` или `RESET API`.
 4. Сервер печатает актуальный адрес туннеля при старте:
    `[server] tunnel url: https://...ngrok-free.dev`. Если ngrok запущен позже сервера,
    адрес там не появится — возьмите его из окна ngrok или из `http://127.0.0.1:4040/api/tunnels`.
@@ -336,6 +354,11 @@ reporting a Pages outage?` — это сбой на стороне GitHub, ко�
 
 `scripts/api-check.mjs` — проверка сервера без браузера: `npm.cmd run check`.
 
+`scripts/publish-check.mjs` — проверка публикации: `npm.cmd run check:publish`.
+Поднимает временную копию сервера (реальные данные не трогает), логинится
+тестовым админом, отправляет `PUT /api/catalog` и проверяет, что обновились
+и `server/data/products.json`, и `public/data/products.json`.
+
 `scripts/tap-check.mjs` — проверка входа без зависимостей (headless Chrome/Edge + CDP):
 `npm.cmd run tap-check`. Убеждается, что кнопки `[ ADMIN ]` нет в DOM, одно нажатие
 по верхней плашке кабинет не открывает, а три открывают экран входа.
@@ -359,4 +382,4 @@ node scripts/smoke2.mjs
 - Без запущенного сервера правки в админке приватны (localStorage на устройстве);
   с сервером они сразу видны всем, кто открыл ссылку туннеля.
 - Персональные Open Graph превью для товаров требуют SSR и здесь недоступны.
-- Имя кэша service worker — `ua-pwa-v7`; поднимите версию в `public/sw.js` после изменений логики кэша.
+- Имя кэша service worker — `ua-pwa-v8`; поднимите версию в `public/sw.js` после изменений логики кэша.

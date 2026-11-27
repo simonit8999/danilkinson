@@ -1,15 +1,36 @@
-import { CONFIG } from '../config';
 import type { Product } from '../types';
 import {
-  hasApiBaseOverride,
+  apiBaseCandidates,
   normalizeApiBase,
   readApiBase,
+  readStoredApiBase,
   resetApiBase,
 } from './apiBase';
 
 // Адрес вычисляется на каждый запрос: его можно поменять из админки
 // (поле API BASE), не пересобирая сайт.
-const withBase = (path: string) => `${readApiBase()}${path}`;
+const withBase = (path: string, base = readApiBase()) => `${base}${path}`;
+
+// Адрес, который уже ответил, запоминаем: иначе каждые 15 секунд клиент
+// заново перебирает мёртвых кандидатов (например, старый домен ngrok).
+let preferredBase: string | null = null;
+
+// Сервер ответил хотя бы раз. Нужно lib/assets.ts: относительные фото
+// каталога достраиваются до адреса API только когда он реально доступен,
+// иначе при выключенном сервере они должны браться с самого сайта.
+let serverReachable = false;
+
+const activeBase = () => preferredBase ?? readApiBase();
+
+/** Доступен ли API (последний опрос каталога был успешным). */
+export function isServerReachable(): boolean {
+  return serverReachable;
+}
+
+/** Забыть запомненный адрес: админ сменил API BASE вручную. */
+export function forgetPreferredApiBase(): void {
+  preferredBase = null;
+}
 
 const NO_CACHE = { 'ngrok-skip-browser-warning': '1' } as const;
 
@@ -17,12 +38,13 @@ async function request(
   path: string,
   init: RequestInit = {},
   timeoutMs = 8000,
+  base = activeBase(),
 ): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetch(withBase(path), {
+    return await fetch(withBase(path, base), {
       ...init,
       cache: 'no-store',
       signal: controller.signal,
@@ -57,10 +79,10 @@ export async function pingServer(base: string, timeoutMs = 6000): Promise<boolea
   }
 }
 
-/** Каталог с сервера. null — сервер недоступен (сайт работает в локальном режиме). */
-async function readRemoteCatalog(): Promise<RemoteCatalog | null> {
+/** Каталог с сервера. null — адрес недоступен (сайт работает в локальном режиме). */
+async function readRemoteCatalog(base: string): Promise<RemoteCatalog | null> {
   try {
-    const response = await request('/api/catalog');
+    const response = await request('/api/catalog', {}, 8000, base);
     if (!response.ok) return null;
 
     const data = (await response.json()) as RemoteCatalog;
@@ -73,16 +95,34 @@ async function readRemoteCatalog(): Promise<RemoteCatalog | null> {
 }
 
 export async function fetchRemoteCatalog(): Promise<RemoteCatalog | null> {
-  const primary = await readRemoteCatalog();
-  if (primary) return primary;
+  const candidates = apiBaseCandidates();
 
-  // В localStorage мог остаться старый домен ngrok. Пробуем адрес из сборки
-  // (VITE_API_URL) и забываем нерабочую ссылку, чтобы клиент не «залипал».
-  if (hasApiBaseOverride() && CONFIG.apiBase) {
-    resetApiBase();
-    return readRemoteCatalog();
+  // Адрес, который уже сработал, пробуем первым.
+  if (preferredBase !== null) {
+    candidates.sort((a, b) => (
+      Number(b.base === preferredBase) - Number(a.base === preferredBase)
+    ));
   }
 
+  for (const candidate of candidates) {
+    const data = await readRemoteCatalog(candidate.base);
+
+    if (data) {
+      preferredBase = candidate.base;
+      serverReachable = true;
+      return data;
+    }
+
+    // В localStorage мог остаться старый домен ngrok. Забываем нерабочую
+    // ссылку и пробуем следующий адрес: из сборки или публичный домен
+    // сервера (нужен GitHub Pages, где своего /api/* нет).
+    if (candidate.stored && readStoredApiBase() === candidate.base) {
+      resetApiBase();
+    }
+  }
+
+  preferredBase = null;
+  serverReachable = false;
   return null;
 }
 

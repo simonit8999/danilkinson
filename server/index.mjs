@@ -37,7 +37,10 @@ const DIST = join(ROOT, 'dist');
 const DATA_DIR = join(ROOT, 'server', 'data');
 const STORE = join(DATA_DIR, 'products.json');
 const BACKUPS = join(DATA_DIR, 'backups');
-const SEED = join(ROOT, 'public', 'data', 'products.json');
+// Статическая копия каталога: её читают покупатели на GitHub Pages, где нет /api/*.
+const PUBLIC_DATA = join(ROOT, 'public', 'data', 'products.json');
+// Битый/отсутствующий store восстанавливаем из последней публикации.
+const SEED = PUBLIC_DATA;
 const HASHES_FILE = join(ROOT, 'shared', 'admin-hashes.json');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -165,6 +168,35 @@ async function writeStore(products) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   await writeFile(join(BACKUPS, `${stamp}.json`), json, 'utf8');
   await pruneBackups().catch(() => {});
+
+  await mirrorStatic(json);
+}
+
+/**
+ * Обновляет статическую копию каталога в репозитории.
+ *
+ * GitHub Pages не умеет читать /api/*, поэтому клиенты Pages берут
+ * public/data/products.json. Раньше файл обновлялся только вручную
+ * (`npm run publish`), и правки админки до покупателей не доезжали:
+ * сервер писал «ONLINE», а на Pages оставался старый каталог.
+ * Теперь копия обновляется при каждом сохранении и ждёт commit + push.
+ */
+async function mirrorStatic(json) {
+  try {
+    const current = await readFile(PUBLIC_DATA, 'utf8').catch(() => null);
+    if (current === json) return false;
+
+    await mkdir(dirname(PUBLIC_DATA), { recursive: true });
+    await writeFile(PUBLIC_DATA, json, 'utf8');
+    console.log(
+      '[server] catalog copy updated: public/data/products.json'
+      + ' (commit + push to refresh the static GitHub Pages fallback)',
+    );
+    return true;
+  } catch (error) {
+    console.warn('[server] cannot update public/data/products.json', error);
+    return false;
+  }
 }
 
 function validateProducts(raw) {
@@ -515,5 +547,6 @@ if (!(await isFile(join(DIST, 'index.html')))) {
 server.listen(PORT, HOST, () => {
   console.log(`[server] catalog + site: http://${HOST}:${PORT}`);
   console.log('[server] tunnel: npm run tunnel  (ngrok http 127.0.0.1:3000)');
+  console.log('[server] every save also updates public/data/products.json (GitHub Pages fallback)');
   void logPublicUrl();
 });
