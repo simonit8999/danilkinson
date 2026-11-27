@@ -5,6 +5,21 @@
       padding: 0;
       box-sizing: border-box;
       border-radius: 0 !important; /* brutalist no radius */
+      /* Android/Chrome: не мигаем синим прямоугольником при тапе. */
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Явно для картинок, карточек и ссылок: tap-highlight не наследуется
+       в некоторых WebView, поэтому дублируем на интерактивных элементах. */
+    img,
+    a,
+    button,
+    [role='button'],
+    .product-card,
+    .detail-photo,
+    .detail-carousel-slide,
+    .archive-item {
+      -webkit-tap-highlight-color: transparent;
     }
 
     :root {
@@ -46,10 +61,8 @@
       --header-offset: calc(env(safe-area-inset-top, 0px) + var(--header-logo-height) + 22px);
 
       /* ----- CAROUSEL & NAV PILLS ----- */
-      --radius-photo: clamp(14px, 2vw, 22px);
+      --radius-photo: 16px;
       --radius-pill: 999px;
-      --carousel-arrow: rgba(166, 137, 99, 0.5);
-      --carousel-arrow-hover: rgba(141, 112, 76, 0.9);
 
       /* ----- LIQUID GLASS: BUTTONS (прозрачное стекло с бликом на гранях) ----- */
       --glass-btn-bg: rgba(255, 255, 255, 0.1);
@@ -113,6 +126,7 @@
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
       /* Контент прокручивается ПОД стеклянной полосой (низ отступает .container),
          поэтому body больше не резервирует место под навигацию. */
       padding-bottom: 0;
@@ -529,7 +543,10 @@
       flex-direction: column;
     }
 
-    /* Карусель фото: без рамки, только скруглённые углы */
+    /* Карусель фото: без рамки, только скруглённые углы.
+       --photo-ratio выставляет Detail.tsx по натуральным размерам фото,
+       поэтому на ПК контейнер повторяет пропорции снимка (а не режет
+       квадратное фото в рамке 4/5). */
     .detail-photo {
       position: relative;
       width: 100%;
@@ -548,8 +565,9 @@
       width: 100%;
       height: 100%;
       will-change: transform;
-      transform: translate3d(0, 0, 0);
-      transition: transform 0.42s var(--ease-apple);
+      touch-action: pan-y pinch-zoom;
+      /* Трансформом управляет framer-motion (drag="x"), CSS-переход
+         здесь только конфликтовал бы с инерцией пальца. */
     }
 
     .detail-carousel-slide {
@@ -567,12 +585,17 @@
       height: 100%;
       object-fit: contain;
       display: block;
+      /* Скругление и на самом снимке: если фото не заполняет контейнер
+         целиком (contain), углы всё равно остаются мягкими. */
+      border-radius: var(--radius-photo) !important;
       user-select: none;
       -webkit-user-select: none;
       -webkit-user-drag: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* Бежевые полупрозрачные стрелки: ни фона, ни рамки */
+    /* Минималистичные полупрозрачные стрелки: без фона, рамки и blur —
+       только тонкий шеврон, как на мобильных. */
     .detail-carousel-arrow {
       position: absolute;
       top: 50%;
@@ -581,33 +604,35 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: clamp(34px, 4.6vw, 48px);
-      height: clamp(34px, 4.6vw, 48px);
+      width: clamp(38px, 4.6vw, 48px);
+      height: clamp(38px, 4.6vw, 48px);
       padding: 0;
-      border: 1px solid var(--glass-btn-border);
+      border: 0;
       border-radius: var(--radius-pill) !important;
-      background: var(--glass-btn-bg);
-      -webkit-backdrop-filter: var(--glass-btn-blur);
-      backdrop-filter: var(--glass-btn-blur);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-      color: var(--carousel-arrow);
+      background: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      box-shadow: none;
+      color: rgba(46, 34, 22, 0.5);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: clamp(28px, 3.4vw, 40px);
+      font-size: clamp(30px, 3.4vw, 40px);
       font-weight: 300;
       line-height: 1;
       cursor: pointer;
+      opacity: 0.75;
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+      transition: color 0.2s ease, opacity 0.2s ease;
     }
 
     .detail-carousel-arrow:hover {
-      background: var(--glass-btn-bg-hover);
-      border-color: rgba(255, 255, 255, 0.6);
-      color: var(--carousel-arrow-hover);
+      background: transparent;
+      border-color: transparent;
+      color: rgba(46, 34, 22, 0.9);
+      opacity: 1;
     }
 
     .detail-carousel-arrow:active {
-      opacity: 0.7;
+      opacity: 0.5;
     }
 
     .detail-carousel-arrow:focus-visible {
@@ -1584,7 +1609,9 @@ body {
   }
 
   .detail-photo {
-    aspect-ratio: 4 / 5;
+    /* Пропорции активного фото (Detail.tsx выставляет --photo-ratio):
+       квадратный снимок → квадратная рамка со скруглёнными углами. */
+    aspect-ratio: var(--photo-ratio, 4 / 5);
   }
 
   .archive-grid {
@@ -1678,7 +1705,6 @@ body::-webkit-scrollbar,
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .order-btn,
   .detail-back,
-  .detail-carousel-arrow,
   .fullscreen-close,
   .btn-send,
   .btn-cancel {
@@ -1687,7 +1713,6 @@ body::-webkit-scrollbar,
 
   .order-btn:hover,
   .detail-back:hover,
-  .detail-carousel-arrow:hover,
   .btn-send:hover,
   .btn-cancel:hover {
     background: rgba(255, 255, 255, 0.92);
@@ -1745,7 +1770,7 @@ body::-webkit-scrollbar,
   .detail-back,
   .nav-label,
   .nav-label::after,
-  .detail-carousel-track,
+  .detail-carousel-arrow,
   .modal-actions button {
     transition: none;
   }

@@ -4,8 +4,16 @@ import {
   useEffect,
   useRef,
   useState,
-  type TouchEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
+import {
+  animate,
+  motion,
+  useDragControls,
+  useMotionValue,
+  useReducedMotion,
+  type PanInfo,
+} from 'framer-motion';
 import {
   HashRouter,
   Navigate,
@@ -17,7 +25,7 @@ import {
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import { CatalogProvider } from './context/CatalogContext';
 import { bindBackgroundScroll } from './lib/backgroundScroll';
-import { getSwipeDirection, isSwipeBlockedTarget } from './lib/swipe';
+import { isSwipeBlockedTarget } from './lib/swipe';
 import { Archive } from './screens/Archive';
 import { Catalog } from './screens/Catalog';
 import { Detail } from './screens/Detail';
@@ -159,53 +167,95 @@ function Shell() {
           : '';
 
   const navIndex = NAV_ITEMS.findIndex((item) => item.key === nav);
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
-  // Свайпы между вкладками: Каталог -> Архив -> Поиск -> Помощь.
-  // На детальной странице и в админке navIndex === -1 — жесты не перехватываем,
-  // там работает собственный свайп «назад» в Detail.
-  const onSwipeStart = (event: TouchEvent<HTMLDivElement>) => {
-    if (navIndex < 0 || event.touches.length !== 1 || isSwipeBlockedTarget(event.target)) {
-      swipeStart.current = null;
+  // ----- Свайпы между вкладками (framer-motion) -----
+  // Контент едет за пальцем через drag="x", как страница в iOS: на отпускании
+  // либо мягко возвращается, либо доезжает до соседней вкладки и въезжает
+  // новая. Ручные onTouchStart/Move/End больше не нужны.
+  const swipeX = useMotionValue(0);
+  const swipeControls = useDragControls();
+  const reduceMotion = useReducedMotion();
+  const navigating = useRef(false);
+  const [swipeLimit, setSwipeLimit] = useState(() => (
+    typeof window === 'undefined' ? 720 : window.innerWidth
+  ));
+
+  useEffect(() => {
+    const onResize = () => setSwipeLimit(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Обычный переход (таб или кнопка) — сдвиг сбрасываем без анимации.
+  useEffect(() => {
+    if (!navigating.current) swipeX.set(0);
+  }, [location.pathname, swipeX]);
+
+  const springBack = () => {
+    swipeX.stop();
+    if (reduceMotion) {
+      swipeX.set(0);
+      return;
+    }
+    animate(swipeX, 0, { type: 'spring', stiffness: 420, damping: 42, mass: 0.9 });
+  };
+
+  const onSwipePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    // На детальной странице и в админке navIndex === -1: у них свой жест.
+    if (navIndex < 0 || navigating.current) return;
+    // Свайп — мобильный жест; на ПК вкладки переключаются кнопками,
+    // чтобы перетаскивание мышью не мешало кликам по карточкам.
+    if (event.pointerType === 'mouse') return;
+    if (!event.isPrimary || event.button > 0) return;
+    if (isSwipeBlockedTarget(event.target)) return;
+
+    swipeControls.start(event);
+  };
+
+  const onSwipeDragEnd = (_event: unknown, info: PanInfo) => {
+    if (navIndex < 0 || navigating.current) {
+      springBack();
       return;
     }
 
-    const touch = event.touches[0];
-    swipeStart.current = { x: touch.clientX, y: touch.clientY };
-  };
+    const width = window.innerWidth || swipeLimit;
+    const threshold = Math.min(140, width * 0.22);
+    const forward = info.offset.x < -threshold || (info.offset.x < 0 && info.velocity.x < -520);
+    const backward = info.offset.x > threshold || (info.offset.x > 0 && info.velocity.x > 520);
 
-  const onSwipeMove = (event: TouchEvent<HTMLDivElement>) => {
-    const start = swipeStart.current;
-    const touch = event.touches[0];
-    if (!start || !touch) return;
+    if (!forward && !backward) {
+      springBack();
+      return;
+    }
 
-    const dx = Math.abs(touch.clientX - start.x);
-    const dy = Math.abs(touch.clientY - start.y);
+    const targetIndex = forward ? navIndex + 1 : navIndex - 1;
+    if (targetIndex < 0 || targetIndex >= NAV_ITEMS.length) {
+      // Крайняя вкладка — двигаться некуда, мягко возвращаем на место.
+      springBack();
+      return;
+    }
 
-    // Обычный вертикальный скролл отменяет жест.
-    if (dy > 12 && dy > dx) swipeStart.current = null;
-  };
+    const exitX = forward ? -width : width;
+    const enterX = -exitX;
 
-  const onSwipeEnd = (event: TouchEvent<HTMLDivElement>) => {
-    const start = swipeStart.current;
-    swipeStart.current = null;
-    if (!start || navIndex < 0) return;
+    navigating.current = true;
 
-    const touch = event.changedTouches[0];
-    if (!touch) return;
+    if (reduceMotion) {
+      swipeX.set(0);
+      navigate(NAV_ITEMS[targetIndex].path);
+      navigating.current = false;
+      return;
+    }
 
-    const direction = getSwipeDirection(start, { x: touch.clientX, y: touch.clientY });
-    if (!direction) return;
+    void animate(swipeX, exitX, { duration: 0.2, ease: [0.32, 0.72, 0, 1] }).then(() => {
+      // Новая вкладка стартует с противоположного края и плавно въезжает.
+      swipeX.set(enterX);
+      navigate(NAV_ITEMS[targetIndex].path);
 
-    const targetIndex = direction === 'left'
-      ? Math.min(NAV_ITEMS.length - 1, navIndex + 1)
-      : Math.max(0, navIndex - 1);
-
-    if (targetIndex !== navIndex) navigate(NAV_ITEMS[targetIndex].path);
-  };
-
-  const onSwipeCancel = () => {
-    swipeStart.current = null;
+      void animate(swipeX, 0, { duration: 0.28, ease: [0.22, 1, 0.36, 1] }).then(() => {
+        navigating.current = false;
+      });
+    });
   };
 
   // Плавающая кнопка [ ADMIN ] удалена: в кабинет входят только тройным
@@ -246,12 +296,21 @@ function Shell() {
           />
         </header>
 
-        <div
+        <motion.div
           className="container"
-          onTouchStart={onSwipeStart}
-          onTouchMove={onSwipeMove}
-          onTouchEnd={onSwipeEnd}
-          onTouchCancel={onSwipeCancel}
+          style={{ x: swipeX, touchAction: 'pan-y' }}
+          drag="x"
+          dragListener={false}
+          dragControls={swipeControls}
+          dragDirectionLock
+          dragConstraints={{
+            left: navIndex >= 0 && navIndex < NAV_ITEMS.length - 1 ? -swipeLimit : 0,
+            right: navIndex > 0 ? swipeLimit : 0,
+          }}
+          dragElastic={0.35}
+          dragMomentum={false}
+          onPointerDown={onSwipePointerDown}
+          onDragEnd={onSwipeDragEnd}
         >
           <ScrollToTop />
 
@@ -264,7 +323,7 @@ function Shell() {
             <Route path="/admin" element={<AdminRoute />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </div>
+        </motion.div>
       </div>
 
       {/* Панель полностью прозрачная: каждая вкладка — своя стеклянная
