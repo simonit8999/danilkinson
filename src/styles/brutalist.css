@@ -41,11 +41,8 @@
       --nav-height: 56px;
       --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
 
-      /* ----- HEADER GLASS (полностью прозрачная плашка) ----- */
+      /* ----- HEADER (полностью прозрачная плашка: только логотип) ----- */
       --header-logo-height: clamp(42px, 5.2vw, 56px);
-      --header-glass: transparent;
-      --header-blur: blur(10px);
-      --header-hairline: transparent;
       --header-offset: calc(env(safe-area-inset-top, 0px) + var(--header-logo-height) + 22px);
 
       /* ----- CAROUSEL & NAV PILLS ----- */
@@ -204,7 +201,7 @@
       animation: fadeIn 0.2s ease-in-out;
     }
 
-    /* ----- TOP BANNER (стеклянная плашка: sticky, без текстуры и орнамента) ----- */
+    /* ----- TOP BANNER (прозрачная плашка: без фона, blur и орнамента) ----- */
     .app-header {
       position: -webkit-sticky;
       position: sticky;
@@ -215,15 +212,27 @@
       justify-content: center;
       width: 100%;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) clamp(12px, 2vw, 20px) 8px;
-      /* Плашка полностью прозрачная: ни белой подложки, ни нижней линии.
-         backdrop-filter оставляет мягкое размытие контента при скролле. */
+      /* Плашка полностью прозрачная: ни подложки, ни линии, ни размытия.
+         Пустая область не перехватывает нажатия — кликабелен только логотип. */
       background: transparent;
-      -webkit-backdrop-filter: var(--header-blur);
-      backdrop-filter: var(--header-blur);
       border: 0;
-      border-bottom: none;
       box-shadow: none;
       overflow: visible;
+      pointer-events: none;
+      transition: transform 0.32s var(--ease-apple), opacity 0.22s ease;
+      will-change: transform, opacity;
+    }
+
+    /* Прокрутка вниз: логотип уезжает за верхний край. Наверх/к началу — возвращается. */
+    .app-header.is-hidden {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Пока логотип скрыт, закреплённой галерее не нужен его отступ сверху. */
+    .scroll-area.header-hidden {
+      --header-offset: calc(env(safe-area-inset-top, 0px) + 8px);
     }
 
     .app-header-logo {
@@ -241,6 +250,7 @@
       -webkit-user-drag: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      pointer-events: auto;
     }
 
     /* ----- SCREEN HEADER ----- */
@@ -1471,11 +1481,6 @@ body::-webkit-scrollbar,
     background: rgba(255, 255, 255, 0.55) !important;
   }
 
-  /* Без blur прозрачный хедер читался бы плохо: оставляем плотную вуаль. */
-  .app-header {
-    background: rgba(244, 239, 230, 0.97);
-  }
-
   /* Общей подложки нет — стекло живёт только в pill-вкладках. */
   .bottom-nav {
     background: transparent;
@@ -1491,6 +1496,7 @@ body::-webkit-scrollbar,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-header,
   .order-btn,
   .detail-back,
   .nav-indicator,

@@ -3,6 +3,7 @@ import {
   Suspense,
   useEffect,
   useRef,
+  useState,
   type CSSProperties,
   type TouchEvent,
 } from 'react';
@@ -85,6 +86,7 @@ function Shell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const taps = useRef({ count: 0, last: 0 });
+  const [headerHidden, setHeaderHidden] = useState(false);
 
   // Фон тянется за прокруткой любого экрана: тайл бесшовный и повторяется
   // по вертикали, поэтому каталог можно листать бесконечно.
@@ -94,6 +96,40 @@ function Shell() {
     if (!area || !layer) return;
 
     return bindBackgroundScroll(area, layer);
+  }, []);
+
+  // Логотип закреплён сверху и прячется при прокрутке вниз, чтобы не
+  // перекрывать товары. Прокрутка вверх или возврат к началу — снова виден.
+  useEffect(() => {
+    const area = containerRef.current;
+    if (!area) return;
+
+    let frame = 0;
+    let lastTop = area.scrollTop;
+
+    const update = () => {
+      frame = 0;
+      const top = area.scrollTop;
+      const delta = top - lastTop;
+
+      if (top <= 8) setHeaderHidden(false);
+      else if (delta > 6) setHeaderHidden(true);
+      else if (delta < -6) setHeaderHidden(false);
+
+      lastTop = top;
+    };
+
+    const request = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    area.addEventListener('scroll', request, { passive: true });
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      area.removeEventListener('scroll', request);
+    };
   }, []);
 
   // Единственный вход в кабинет: три нажатия подряд по верхней плашке.
@@ -186,8 +222,14 @@ function Shell() {
         <div className="app-bg-grain" />
       </div>
 
-      <div className="scroll-area" ref={containerRef}>
-        <header className="app-header">
+      <div
+        className={headerHidden ? 'scroll-area header-hidden' : 'scroll-area'}
+        ref={containerRef}
+      >
+        <header
+          className={headerHidden ? 'app-header is-hidden' : 'app-header'}
+          onFocus={() => setHeaderHidden(false)}
+        >
           <img
             className="app-header-logo"
             src={HEADER_LOGO}
