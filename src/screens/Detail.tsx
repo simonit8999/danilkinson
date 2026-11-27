@@ -162,7 +162,10 @@ export function Detail() {
       </div>
 
       <div className="detail-layout">
-        <h1 className="detail-name">{product.name}</h1>
+        <div className="detail-heading">
+          <h1 className="detail-name">{product.name}</h1>
+          <div className="detail-price">{product.price}</div>
+        </div>
 
         <div className="detail-gallery">
           {photoCount > 0 ? (
@@ -235,8 +238,6 @@ export function Detail() {
         </div>
 
         <div className="detail-body">
-          <div className="detail-price">{product.price}</div>
-
           {product.soldOut && <div className="detail-soldout">SOLD OUT</div>}
 
           <div className="detail-description">{product.description}</div>
