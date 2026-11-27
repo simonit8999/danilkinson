@@ -51,18 +51,44 @@
       --carousel-arrow: rgba(166, 137, 99, 0.5);
       --carousel-arrow-hover: rgba(141, 112, 76, 0.9);
       --nav-glass: transparent;
-      --nav-pill-bg: rgba(255, 255, 255, 0.15);
-      --nav-pill-bg-hover: rgba(255, 255, 255, 0.22);
-      --nav-pill-bg-active: rgba(255, 255, 255, 0.3);
-      --nav-pill-border: rgba(255, 255, 255, 0.3);
-      --nav-pill-border-active: rgba(255, 255, 255, 0.5);
-      --nav-pill-blur: blur(15px) saturate(180%);
+      /* Единая стеклянная полоса вкладок (см. .bottom-nav). */
 
       /* ----- LIQUID GLASS: BUTTONS (прозрачное стекло с бликом на гранях) ----- */
       --glass-btn-bg: rgba(255, 255, 255, 0.1);
       --glass-btn-bg-hover: rgba(255, 255, 255, 0.2);
       --glass-btn-border: rgba(255, 255, 255, 0.4);
       --glass-btn-blur: blur(12px) saturate(180%);
+
+      /* ----- BOTTOM NAV: одна бежевая стеклянная полоса на всех экранах ----- */
+      --nav-glass-bg: linear-gradient(
+        180deg,
+        rgba(244, 239, 230, 0.24) 0%,
+        rgba(240, 232, 219, 0.6) 42%,
+        rgba(236, 226, 211, 0.88) 100%
+      );
+      --nav-glass-blur: blur(24px) saturate(165%);
+      --nav-glass-border: rgba(166, 137, 99, 0.26);
+      --nav-text: rgba(64, 52, 38, 0.5);
+      --nav-text-hover: rgba(46, 34, 22, 0.8);
+      --nav-text-active: #2e2417;
+
+      /* ----- ROUNDED SHOP GLASS: карточки, поля и кнопки ----- */
+      --radius-control: clamp(16px, 2vw, 22px);
+      --radius-card: clamp(14px, 1.8vw, 20px);
+      --glass-beige-bg: linear-gradient(
+        135deg,
+        rgba(255, 251, 244, 0.66) 0%,
+        rgba(242, 232, 217, 0.46) 55%,
+        rgba(233, 219, 199, 0.58) 100%
+      );
+      --glass-beige-bg-strong: linear-gradient(
+        135deg,
+        rgba(255, 252, 246, 0.88) 0%,
+        rgba(242, 232, 217, 0.68) 55%,
+        rgba(228, 211, 187, 0.78) 100%
+      );
+      --glass-beige-border: rgba(166, 137, 99, 0.3);
+      --glass-beige-shadow: 0 14px 34px rgba(90, 68, 43, 0.1), 0 1px 2px rgba(90, 68, 43, 0.05);
     }
 
     html {
@@ -87,7 +113,9 @@
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
-      padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+      /* Контент прокручивается ПОД стеклянной полосой (низ отступает .container),
+         поэтому body больше не резервирует место под навигацию. */
+      padding-bottom: 0;
       overflow-x: hidden;
     }
 
@@ -180,7 +208,9 @@
     }
 
     .container {
-      padding: 10px 12px 28px;
+      /* Нижний отступ = высота полосы: последний товар можно прокрутить
+         полностью, но во время прокрутки вещи уходят под стекло. */
+      padding: 10px 12px calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
       max-width: 1500px;
       margin: 0 auto;
       width: 100%;
@@ -376,11 +406,12 @@
       grid-column: 1 / -1;
       font-family: 'Courier New', monospace;
       padding: 20px 16px;
-      background: var(--surface-glass);
-      box-shadow: inset 0 0 0 1px var(--hairline);
+      border-radius: var(--radius-card) !important;
+      background: var(--glass-beige-bg);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
-      color: rgba(0, 0, 0, 0.55);
+      color: rgba(46, 34, 22, 0.6);
       text-align: center;
       letter-spacing: 1px;
     }
@@ -395,8 +426,9 @@
     .archive-item {
       aspect-ratio: 1 / 1;
       border: 0;
-      background: var(--surface-glass);
-      box-shadow: inset 0 0 0 1px var(--hairline);
+      border-radius: var(--radius-card) !important;
+      background: var(--glass-beige-bg);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
       cursor: pointer;
@@ -446,6 +478,7 @@
       cursor: pointer;
       background: var(--glass-btn-bg);
       border: 1px solid var(--glass-btn-border);
+      border-radius: var(--radius-pill) !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
       -webkit-backdrop-filter: var(--glass-btn-blur);
       backdrop-filter: var(--glass-btn-blur);
@@ -651,6 +684,7 @@
       font-size: 13px;
       letter-spacing: 2px;
       padding: 7px 16px;
+      border-radius: var(--radius-pill) !important;
       margin-bottom: 16px;
       text-transform: uppercase;
     }
@@ -669,7 +703,8 @@
       background: var(--glass-btn-bg);
       color: #000;
       border: 1px solid var(--glass-btn-border);
-      border-radius: 0 !important;
+      /* Скруглённая стеклянная кнопка BUY (в стиле магазина). */
+      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
       font-size: clamp(15px, 1.4vw, 18px);
       letter-spacing: 0.16em;
@@ -731,6 +766,7 @@
     .modal-content {
       background: rgba(250, 247, 241, 0.74);
       border: 0;
+      border-radius: var(--radius-card) !important;
       max-width: 440px;
       width: 100%;
       padding: clamp(22px, 4vw, 30px);
@@ -753,6 +789,7 @@
       font-family: 'Courier New', monospace;
       font-size: 16px;
       border: 0;
+      border-radius: var(--radius-control) !important;
       padding: 14px;
       margin-bottom: 16px;
       resize: vertical;
@@ -788,6 +825,7 @@
       min-height: 48px;
       text-transform: uppercase;
       border: 0;
+      border-radius: var(--radius-pill) !important;
       cursor: pointer;
       box-shadow: inset 0 0 0 1px var(--hairline);
       transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s var(--ease-apple);
@@ -830,18 +868,20 @@
       border-color: rgba(255, 255, 255, 0.6);
     }
 
-    /* ----- SEARCH INPUT (borderless glass) ----- */
+    /* ----- SEARCH INPUT (rounded beige glass, shop display font) ----- */
     .search-input {
       width: 100%;
-      font-family: 'Courier New', monospace;
-      font-size: 18px;
-      border: 0;
-      padding: clamp(13px, 2vw, 16px) clamp(14px, 2vw, 20px);
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.06em;
+      border: 1px solid var(--glass-beige-border);
+      border-radius: var(--radius-control) !important;
+      padding: clamp(13px, 2vw, 16px) clamp(16px, 2vw, 22px);
       margin: 12px 0 24px;
-      background: var(--surface-glass);
-      color: #000;
+      background: var(--glass-beige-bg);
+      color: #2e2417;
       font-weight: 400;
-      box-shadow: inset 0 0 0 1px var(--hairline), 0 10px 24px rgba(0, 0, 0, 0.05);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 24px rgba(90, 68, 43, 0.07);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
       transition: background 0.2s ease, box-shadow 0.2s ease;
@@ -849,22 +889,24 @@
 
     .search-input:focus {
       outline: none;
-      background: var(--surface-glass-strong);
-      box-shadow: inset 0 0 0 1px var(--hairline-strong), 0 12px 28px rgba(0, 0, 0, 0.07);
+      background: var(--glass-beige-bg-strong);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border), 0 0 0 3px rgba(166, 137, 99, 0.16);
     }
 
     .search-input::placeholder {
-      color: rgba(0, 0, 0, 0.4);
-      font-family: 'Courier New', monospace;
+      color: rgba(64, 52, 38, 0.38);
+      font-family: 'Anton', sans-serif;
+      letter-spacing: 0.08em;
     }
 
-    /* ----- HELP SCREEN ----- */
+    /* ----- HELP SCREEN (rounded beige glass panels) ----- */
     .help-block {
       border: 0;
+      border-radius: var(--radius-card) !important;
       padding: clamp(16px, 2.4vw, 22px);
       margin-bottom: 20px;
-      background: rgba(255, 255, 255, 0.28);
-      box-shadow: inset 0 0 0 1px var(--hairline);
+      background: var(--glass-beige-bg);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border), var(--glass-beige-shadow);
       -webkit-backdrop-filter: var(--glass-blur);
       backdrop-filter: var(--glass-blur);
     }
@@ -898,25 +940,41 @@
       color: #000;
     }
 
-    /* ----- ADMIN SCREEN (list + form) ----- */
+    /* ----- ADMIN SCREEN (rounded beige glass, shop styling) ----- */
+    /* Форма — стеклянная карточка со скруглением, без чёрных рамок. */
+    .admin-form {
+      background: var(--glass-beige-bg);
+      border-radius: var(--radius-card) !important;
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border), var(--glass-beige-shadow);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+      padding: clamp(14px, 2vw, 22px);
+    }
+
     .admin-section-title {
       font-family: 'Anton', sans-serif;
       font-size: 22px;
       margin: 24px 0 12px;
-      border-bottom: 3px solid #000;
-      padding-bottom: 6px;
+      border-bottom: 1px solid var(--hairline-strong);
+      padding-bottom: 8px;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .admin-product-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      border: 3px solid #000;
-      padding: 8px 10px;
+      gap: 10px;
+      padding: 12px 14px;
       margin-bottom: 10px;
       flex-wrap: wrap;
+      background: var(--glass-beige-bg);
+      border: 0;
+      border-radius: var(--radius-card) !important;
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border);
+      -webkit-backdrop-filter: var(--glass-btn-blur);
+      backdrop-filter: var(--glass-btn-blur);
     }
 
     .admin-product-info {
@@ -953,37 +1011,73 @@
     .admin-actions button {
       font-family: 'Anton', sans-serif;
       font-size: 11px;
-      letter-spacing: 0.5px;
-      padding: 6px 8px;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
+      letter-spacing: 0.06em;
+      padding: 8px 12px;
+      border: 1px solid var(--glass-btn-border);
+      border-radius: var(--radius-pill) !important;
+      background: var(--glass-btn-bg);
+      color: #2e2417;
       cursor: pointer;
       text-transform: uppercase;
-      transition: none;
+      -webkit-backdrop-filter: var(--glass-btn-blur);
+      backdrop-filter: var(--glass-btn-blur);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s var(--ease-apple);
     }
 
     .admin-actions button:hover {
-      background: #000;
-      color: #fff;
+      background: var(--glass-btn-bg-hover);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #000;
+      transform: translateY(-1px);
     }
 
+    .admin-actions button:active {
+      transform: translateY(0);
+      box-shadow: var(--glass-inset-active);
+    }
+
+    /* «Опасные» действия — тёплый акцент вместо чёрной рамки. */
     .admin-actions button.danger {
-      border-color: #000;
+      color: #8a3a24;
+      border-color: rgba(138, 58, 36, 0.32);
+      background: rgba(255, 245, 240, 0.28);
+    }
+
+    .admin-actions button.danger:hover {
+      background: rgba(255, 236, 228, 0.55);
+      border-color: rgba(138, 58, 36, 0.5);
+      color: #7a2f1c;
     }
 
     .admin-add-btn {
       width: 100%;
-      background: #000;
-      color: #fff;
-      border: 3px solid #000;
+      background: var(--glass-beige-bg-strong);
+      color: #2e2417;
+      border: 1px solid var(--glass-beige-border);
+      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
-      font-size: 18px;
-      letter-spacing: 2px;
+      font-size: 16px;
+      letter-spacing: 0.14em;
       padding: 16px 0;
       text-transform: uppercase;
       cursor: pointer;
       margin: 0 0 20px 0; /* Отступ снизу, чтобы список не прилипал */
+      -webkit-backdrop-filter: var(--glass-btn-blur);
+      backdrop-filter: var(--glass-btn-blur);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--glass-beige-shadow);
+      transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s var(--ease-apple);
+    }
+
+    .admin-add-btn:hover {
+      background: rgba(255, 252, 246, 0.95);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 18px 36px rgba(90, 68, 43, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .admin-add-btn:active {
+      transform: translateY(0);
+      box-shadow: var(--glass-inset-active);
     }
 
     .admin-form label {
@@ -993,17 +1087,53 @@
       letter-spacing: 1px;
       margin: 18px 0 6px;
       text-transform: uppercase;
+      color: #2e2417;
     }
 
     .admin-form input[type="text"],
-    .admin-form input[type="number"],
+    .admin-form input[type="number"] {
+      width: 100%;
+      font-family: 'Anton', sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+      color: #2e2417;
+      border: 1px solid var(--glass-beige-border);
+      border-radius: var(--radius-control) !important;
+      padding: 12px 14px;
+      background: rgba(255, 252, 246, 0.6);
+      -webkit-backdrop-filter: var(--glass-btn-blur);
+      backdrop-filter: var(--glass-btn-blur);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .admin-form input[type="text"]:focus,
+    .admin-form input[type="number"]:focus {
+      outline: none;
+      background: rgba(255, 253, 249, 0.88);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border), 0 0 0 3px rgba(166, 137, 99, 0.16);
+    }
+
+    .admin-form input::placeholder,
+    .admin-form textarea::placeholder {
+      color: rgba(64, 52, 38, 0.38);
+    }
+
     .admin-form textarea {
       width: 100%;
       font-family: 'Courier New', monospace;
       font-size: 16px;
-      border: 3px solid #000;
-      padding: 12px;
-      background: #fff;
+      color: #2e2417;
+      border: 1px solid var(--glass-beige-border);
+      border-radius: var(--radius-control) !important;
+      padding: 12px 14px;
+      background: rgba(255, 252, 246, 0.6);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .admin-form textarea:focus {
+      outline: none;
+      background: rgba(255, 253, 249, 0.88);
+      box-shadow: inset 0 0 0 1px var(--glass-beige-border), 0 0 0 3px rgba(166, 137, 99, 0.16);
     }
 
     .admin-form textarea {
@@ -1018,12 +1148,41 @@
       margin: 20px 0;
     }
 
+    /* Кастомный чекбокс: скруглённый, в цвете оформления (а не системный квадрат). */
     .admin-form input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      position: relative;
+      flex: 0 0 24px;
       width: 24px;
       height: 24px;
-      accent-color: #000;
-      border: 2px solid #000;
+      border: 1px solid var(--glass-beige-border);
+      border-radius: 8px !important;
+      background: rgba(255, 252, 246, 0.6);
       cursor: pointer;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .admin-form input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, rgba(214, 193, 164, 0.95), rgba(186, 160, 124, 0.95));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .admin-form input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 3px;
+      width: 6px;
+      height: 12px;
+      border: solid #241a10;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .admin-form input[type="checkbox"]:focus-visible {
+      outline: 2px solid rgba(166, 137, 99, 0.5);
+      outline-offset: 2px;
     }
 
     .admin-form .checkbox-row span {
@@ -1034,33 +1193,63 @@
 
     .admin-form button.save-btn {
       width: 100%;
-      background: #000;
-      color: #fff;
-      border: 3px solid #000;
+      background: linear-gradient(135deg, rgba(214, 193, 164, 0.95), rgba(186, 160, 124, 0.95));
+      color: #241a10;
+      border: 1px solid rgba(166, 137, 99, 0.45);
+      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
-      font-size: 20px;
-      letter-spacing: 2px;
+      font-size: 18px;
+      letter-spacing: 0.14em;
       padding: 16px 0;
       text-transform: uppercase;
       cursor: pointer;
       margin-top: 24px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 14px 30px rgba(90, 68, 43, 0.14);
+      transition: box-shadow 0.2s ease, transform 0.2s var(--ease-apple);
+    }
+
+    .admin-form button.save-btn:hover {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 18px 36px rgba(90, 68, 43, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .admin-form button.save-btn:active {
+      transform: translateY(0);
+      box-shadow: var(--glass-inset-active);
     }
 
     .admin-form button.back-btn {
       width: 100%;
-      background: #fff;
-      color: #000;
-      border: 3px solid #000;
+      background: var(--glass-btn-bg);
+      color: #2e2417;
+      border: 1px solid var(--glass-btn-border);
+      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
       font-size: 16px;
-      letter-spacing: 2px;
+      letter-spacing: 0.14em;
       padding: 12px 0;
       text-transform: uppercase;
       cursor: pointer;
       margin-top: 12px;
+      -webkit-backdrop-filter: var(--glass-btn-blur);
+      backdrop-filter: var(--glass-btn-blur);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s var(--ease-apple);
     }
 
-    /* ----- BOTTOM NAV (стекло + pill-вкладки + ползунок) ----- */
+    .admin-form button.back-btn:hover {
+      background: var(--glass-btn-bg-hover);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #000;
+      transform: translateY(-1px);
+    }
+
+    .admin-form button.back-btn:active {
+      transform: translateY(0);
+      box-shadow: var(--glass-inset-active);
+    }
+
+    /* ----- BOTTOM NAV (одна бежевая стеклянная полоса на всех экранах) ----- */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -1069,12 +1258,32 @@
       z-index: 500;
       height: calc(var(--nav-height) + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);
-      /* Панель без общей матовой подложки: стекло только у каждой вкладки. */
-      background: transparent;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
+      /* Единое матовое бежевое стекло: контент плавно уходит под него,
+         а не выглядывает между отдельными плашками. */
+      background: var(--nav-glass-bg);
+      -webkit-backdrop-filter: var(--nav-glass-blur);
+      backdrop-filter: var(--nav-glass-blur);
       border: 0;
-      box-shadow: none;
+      border-top: 1px solid var(--nav-glass-border);
+      box-shadow: 0 -18px 40px rgba(74, 56, 34, 0.08);
+      pointer-events: auto;
+    }
+
+    /* Мягкий верхний край: над полосой стекло растворяется в фоне. */
+    .bottom-nav::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 100%;
+      height: 18px;
+      background: linear-gradient(
+        180deg,
+        rgba(244, 239, 230, 0) 0%,
+        rgba(242, 234, 221, 0.14) 55%,
+        rgba(240, 232, 219, 0.3) 100%
+      );
+      pointer-events: none;
     }
 
     .bottom-nav-track {
@@ -1092,13 +1301,14 @@
       min-width: 0;
       background: transparent;
       border: 0;
+      border-radius: var(--radius-pill) !important;
       font-family: 'Anton', sans-serif;
       font-size: clamp(10px, 0.9vw, 13px);
       letter-spacing: 0.08em;
-      padding: 0 2px 8px;
+      padding: 0 2px;
       cursor: pointer;
       text-transform: uppercase;
-      color: rgba(0, 0, 0, 0.48);
+      color: var(--nav-text);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1107,42 +1317,38 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Каждая вкладка — отдельная стеклянная «таблетка» */
-    .nav-label {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 6px clamp(8px, 1.2vw, 14px);
-      background: var(--nav-pill-bg);
-      border: 1px solid var(--nav-pill-border);
-      border-radius: var(--radius-pill) !important;
-      -webkit-backdrop-filter: var(--nav-pill-blur);
-      backdrop-filter: var(--nav-pill-blur);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+    .bottom-nav button:hover {
+      color: var(--nav-text-hover);
     }
 
-    .bottom-nav button:hover .nav-label {
-      background: var(--nav-pill-bg-hover);
-      border-color: rgba(255, 255, 255, 0.4);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-      color: rgba(0, 0, 0, 0.78);
-    }
-
-    .bottom-nav button:active .nav-label {
-      background: rgba(255, 255, 255, 0.26);
+    .bottom-nav button:active {
       color: #000;
     }
 
     .bottom-nav button.active {
       background: transparent;
-      color: #000;
+      color: var(--nav-text-active);
     }
 
+    /* Подпись вкладки: только текст — ни подложки, ни рамки, ни размытия. */
+    .nav-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0 !important;
+      box-shadow: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    .bottom-nav button:hover .nav-label,
     .bottom-nav button.active .nav-label {
-      background: var(--nav-pill-bg-active);
-      border-color: var(--nav-pill-border-active);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 14px rgba(0, 0, 0, 0.06);
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
     }
 
     .bottom-nav button:focus-visible {
@@ -1151,31 +1357,7 @@
 
     .bottom-nav button:focus-visible .nav-label {
       outline: 1px solid var(--hairline-strong);
-      outline-offset: 1px;
-    }
-
-    /* Ползунок под активной вкладкой */
-    .nav-indicator {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: calc(100% / var(--nav-count, 4));
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 5px;
-      transform: translateX(calc(var(--nav-index, 0) * 100%));
-      transition: transform 0.32s var(--ease-apple);
-      pointer-events: none;
-    }
-
-    .nav-indicator::after {
-      content: '';
-      width: 20px;
-      height: 2px;
-      border-radius: var(--radius-pill) !important;
-      background: rgba(0, 0, 0, 0.72);
+      outline-offset: 2px;
     }
 
     /* small screens */
@@ -1183,15 +1365,11 @@
       .bottom-nav button {
         font-size: 11px;
         letter-spacing: 0.06em;
-        padding: 0 1px 7px;
+        padding: 0 1px;
       }
 
       .nav-label {
-        padding: 5px 8px;
-      }
-
-      .nav-indicator {
-        padding-bottom: 4px;
+        padding: 0;
       }
     }
   
@@ -1205,13 +1383,14 @@
 }
 
 /* ----- SAFE AREA FOR IPHONE / PWA ----- */
+/* Полоса навигации сама учитывает safe-area, а контент прокручивается под ней. */
 body {
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: 0;
 }
 
 /* ----- DETAIL: ORDER BUTTON ABOVE BOTTOM NAV ----- */
 .detail-screen {
-  padding-bottom: calc(var(--nav-height) + 24px);
+  padding-bottom: 16px;
 }
 
 /* ----- ADMIN: COVER PREVIEW ----- */
@@ -1222,7 +1401,8 @@ body {
   object-fit: contain;
   margin-top: 10px;
   padding: 6px;
-  border: 1px solid #000;
+  border: 1px solid var(--glass-beige-border);
+  border-radius: var(--radius-control) !important;
   background-color: #fff;
   background-image:
     linear-gradient(45deg, #e6e6e6 25%, transparent 25%),
@@ -1237,35 +1417,45 @@ body {
   font-family: 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.45;
-  color: #333;
+  color: #4a3a28;
   margin: 8px 0 0;
 }
 
-/* ----- ADMIN: SERVER STATUS ----- */
+/* ----- ADMIN: SERVER STATUS (rounded beige glass card) ----- */
 .server-status {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  border: 3px solid #000;
-  padding: 8px 10px;
+  padding: 10px 14px;
   margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--glass-beige-bg);
+  border: 0;
+  border-radius: var(--radius-card) !important;
+  box-shadow: inset 0 0 0 1px var(--glass-beige-border);
+  -webkit-backdrop-filter: var(--glass-btn-blur);
+  backdrop-filter: var(--glass-btn-blur);
   font-family: 'Courier New', monospace;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
+  color: #2e2417;
 }
 
 .server-status[data-online='false'] {
-  border-style: dashed;
+  color: #7a2f1c;
+  box-shadow: inset 0 0 0 1px rgba(138, 58, 36, 0.3);
 }
 
 /* ----- ADMIN: API BASE (адрес сервера/туннеля меняется без пересборки) ----- */
 .admin-api {
-  border: 3px dashed #000;
-  padding: 12px;
+  padding: 14px;
   margin-bottom: 16px;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--glass-beige-bg);
+  border: 0;
+  border-radius: var(--radius-card) !important;
+  box-shadow: inset 0 0 0 1px var(--glass-beige-border);
+  -webkit-backdrop-filter: var(--glass-btn-blur);
+  backdrop-filter: var(--glass-btn-blur);
 }
 
 .admin-api label {
@@ -1275,16 +1465,31 @@ body {
   letter-spacing: 1px;
   margin-bottom: 6px;
   text-transform: uppercase;
+  color: #2e2417;
 }
 
 .admin-api input {
   width: 100%;
-  font-family: 'Courier New', monospace;
+  font-family: 'Anton', sans-serif;
   font-size: 14px;
-  border: 3px solid #000;
-  padding: 10px;
-  background: #fff;
+  letter-spacing: 0.04em;
+  color: #2e2417;
+  border: 1px solid var(--glass-beige-border);
+  border-radius: var(--radius-control) !important;
+  padding: 10px 14px;
+  background: rgba(255, 252, 246, 0.6);
   margin-bottom: 8px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-api input:focus {
+  outline: none;
+  background: rgba(255, 253, 249, 0.88);
+  box-shadow: inset 0 0 0 1px var(--glass-beige-border), 0 0 0 3px rgba(166, 137, 99, 0.16);
+}
+
+.admin-api input::placeholder {
+  color: rgba(64, 52, 38, 0.38);
 }
 
 .admin-api .admin-hint {
@@ -1416,7 +1621,8 @@ body::-webkit-scrollbar,
   background: var(--glass-btn-bg);
   color: #000;
   border: 1px solid var(--glass-btn-border);
-  border-radius: 0 !important;
+  /* Скруглённая стеклянная кнопка BACK. */
+  border-radius: var(--radius-pill) !important;
   font-family: 'Anton', sans-serif;
   font-size: 12px;
   letter-spacing: 0.14em;
@@ -1454,7 +1660,6 @@ body::-webkit-scrollbar,
   .detail-back,
   .detail-carousel-arrow,
   .fullscreen-close,
-  .nav-label,
   .btn-send,
   .btn-cancel {
     background: rgba(255, 255, 255, 0.82);
@@ -1463,14 +1668,9 @@ body::-webkit-scrollbar,
   .order-btn:hover,
   .detail-back:hover,
   .detail-carousel-arrow:hover,
-  .bottom-nav button:hover .nav-label,
   .btn-send:hover,
   .btn-cancel:hover {
     background: rgba(255, 255, 255, 0.92);
-  }
-
-  .bottom-nav button.active .nav-label {
-    background: rgba(255, 255, 255, 0.95);
   }
 
   .fullscreen-close {
@@ -1481,17 +1681,32 @@ body::-webkit-scrollbar,
     background: rgba(255, 255, 255, 0.55) !important;
   }
 
-  /* Общей подложки нет — стекло живёт только в pill-вкладках. */
+  /* Единая бежевая полоса без размытия (браузер не умеет backdrop-filter). */
   .bottom-nav {
-    background: transparent;
+    background: rgba(240, 232, 219, 0.96);
   }
 
   .modal-content {
     background: rgba(250, 247, 241, 0.97);
   }
 
-  .search-input {
-    background: rgba(255, 255, 255, 0.82);
+  .search-input,
+  .help-block,
+  .grid-empty,
+  .archive-item,
+  .admin-form,
+  .admin-product-row,
+  .admin-add-btn,
+  .admin-api,
+  .server-status {
+    background: rgba(250, 246, 239, 0.94);
+  }
+
+  .admin-form input[type="text"],
+  .admin-form input[type="number"],
+  .admin-form textarea,
+  .admin-api input {
+    background: rgba(255, 252, 246, 0.94);
   }
 }
 
@@ -1499,7 +1714,6 @@ body::-webkit-scrollbar,
   .app-header,
   .order-btn,
   .detail-back,
-  .nav-indicator,
   .nav-label,
   .detail-carousel-track,
   .modal-actions button {

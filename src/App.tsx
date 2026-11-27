@@ -4,7 +4,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type TouchEvent,
 } from 'react';
 import {
@@ -268,14 +267,10 @@ function Shell() {
         </div>
       </div>
 
+      {/* Единая стеклянная полоса: без подсветки вкладок и без ползунка,
+          поэтому на всех экранах (включая товар и админку) она одинаковая. */}
       <nav className="bottom-nav" aria-label="Main navigation">
-        <div
-          className="bottom-nav-track"
-          style={{
-            '--nav-index': Math.max(0, navIndex),
-            '--nav-count': NAV_ITEMS.length,
-          } as CSSProperties}
-        >
+        <div className="bottom-nav-track">
           {NAV_ITEMS.map((item) => {
             const active = nav === item.key;
 
@@ -291,8 +286,6 @@ function Shell() {
               </button>
             );
           })}
-
-          {navIndex >= 0 && <span className="nav-indicator" aria-hidden="true" />}
         </div>
       </nav>
     </>
