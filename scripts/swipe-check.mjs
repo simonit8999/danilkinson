@@ -95,6 +95,18 @@ const TEST_PRODUCTS = [
     soldOut: true,
     archived: true,
   },
+  // Несколько архивных плиток: строка сетки должна попадать под палец,
+  // чтобы свайпы вкладок проверялись именно на плитке архива.
+  ...Array.from({ length: 5 }, (_, index) => ({
+    id: `test-archive-${index + 2}`,
+    name: `TEST ARCHIVE ITEM ${index + 2}`,
+    price: '€ 3',
+    images: [PHOTO_SINGLE],
+    cover: PHOTO_SINGLE,
+    description: 'archive',
+    soldOut: false,
+    archived: true,
+  })),
   // Ещё несколько товаров: каталог должен быть выше вьюпорта, чтобы
   // проверить вертикальную прокрутку и отсутствие конфликта с drag.
   ...Array.from({ length: 6 }, (_, index) => ({
@@ -640,6 +652,70 @@ async function testTabSwipes() {
   });
 }
 
+// ---------------------------------------------------------------- архив: просмотр фото
+
+async function archiveState() {
+  return evaluate(`(() => {
+    const container = document.querySelector('.container');
+    const box = container ? container.getBoundingClientRect() : null;
+    return {
+      hash: window.location.hash || '#/',
+      tiles: document.querySelectorAll('.archive-item').length,
+      overlay: !!document.querySelector('.fullscreen-overlay'),
+      containerX: box ? Math.round(box.x) : null,
+    };
+  })()`);
+}
+
+async function testArchiveViewer() {
+  await openCatalog();
+  const opened = await swipeTab('left');
+  const start = await archiveState();
+  record('архив: свайп из каталога открывает экран', (
+    opened === '#/archive' && start.tiles >= 3
+  ), start);
+
+  // Тап по плитке открывает полноэкранное фото.
+  const tile = await rect('.archive-item');
+  await touchTap(tile.cx, tile.cy);
+  await sleep(400);
+  const afterTap = await archiveState();
+  record('архив: тап по плитке открывает фото', (
+    afterTap.overlay && afterTap.hash === '#/archive'
+  ), afterTap);
+
+  // Свайп по просмотру закрывает его — с фото нельзя «застрять».
+  await touchSwipe(330, 420, 70, 420, { steps: 10, stepDelay: 18 });
+  await sleep(500);
+  const afterCloseSwipe = await archiveState();
+  record('архив: свайп по фото закрывает просмотр', !afterCloseSwipe.overlay, afterCloseSwipe);
+
+  // Свайп, начатый на плитке, переключает вкладку и НЕ открывает фото.
+  const onTile = await rect('.archive-item:nth-child(3)');
+  await touchSwipe(
+    onTile.x + onTile.width - 8,
+    onTile.cy,
+    onTile.x + 8,
+    onTile.cy,
+    { steps: 8, stepDelay: 18 },
+  );
+  await sleep(900);
+  const afterSwipe = await archiveState();
+  record('архив: свайп по плитке переключает вкладку и не открывает фото', (
+    afterSwipe.hash === '#/search' && !afterSwipe.overlay
+  ), afterSwipe);
+
+  await touchSwipe(60, 250, 330, 250, { steps: 8, stepDelay: 18 });
+  await sleep(900);
+  const backToArchive = await archiveState();
+  record('архив: свайп вправо возвращает из поиска', backToArchive.hash === '#/archive', backToArchive);
+
+  await touchSwipe(60, 250, 330, 250, { steps: 8, stepDelay: 18 });
+  await sleep(900);
+  const backToCatalog = await archiveState();
+  record('архив: свайп вправо уводит в каталог', backToCatalog.hash === '#/', backToCatalog);
+}
+
 // ---------------------------------------------------------------- свайп «назад» из карточки
 
 async function testDetailBackSwipe() {
@@ -980,6 +1056,7 @@ async function main() {
     await emulationMobile();
     await debugTabSwipe();
     await testTabSwipes();
+    await testArchiveViewer();
     await testDetailBackSwipe();
     await testCarousel();
     await testCarouselControls();

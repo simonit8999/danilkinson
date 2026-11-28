@@ -445,24 +445,47 @@
       gap: 8px;
     }
 
+    /* Плитка — div[role=button], как .product-card в каталоге: нативный
+       <button> на тач-устройствах забирает горизонтальный жест себе, и свайп
+       между вкладками не доходит до общего drag-контейнера. */
     .archive-item {
+      display: block;
+      width: 100%;
       aspect-ratio: 1 / 1;
       border: 0;
       border-radius: var(--radius-card) !important;
       background: var(--glass-beige-bg);
       box-shadow: inset 0 0 0 1px var(--glass-beige-border);
-      -webkit-backdrop-filter: var(--glass-blur);
-      backdrop-filter: var(--glass-blur);
       cursor: pointer;
       overflow: hidden;
       padding: 0;
+      /* Горизонталь — жест приложения (переключение вкладок),
+         вертикаль — прокрутка сетки. */
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      outline-offset: 2px;
     }
 
+    .archive-item:focus-visible {
+      outline: 2px solid #000;
+    }
+
+    /* Фото не перехватывает палец: иначе браузер начинает нативный drag
+       картинки / выделение, приходит pointercancel, и свайп «не работает». */
     .archive-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+      -webkit-touch-callout: none;
       transition: none;
     }
 
