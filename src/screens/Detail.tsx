@@ -14,42 +14,43 @@ import {
   useReducedMotion,
   type PanInfo,
 } from 'framer-motion';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { OrderModal } from '../components/OrderModal';
 import { useCatalog } from '../context/CatalogContext';
 import { resolveAssetUrl } from '../lib/assets';
 import { isSwipeBlockedTarget } from '../lib/swipe';
 
+/** Экраны-меню: из них открывают карточку и туда же возвращает BACK/свайп. */
+const MENU_PATHS = new Set(['/', '/archive', '/search', '/help']);
+
 export function Detail() {
   const { id } = useParams<{ id: string }>();
   const { products } = useCatalog();
   const navigate = useNavigate();
+  const location = useLocation();
   const [orderOpen, setOrderOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [photoRatio, setPhotoRatio] = useState<number | null>(null);
-  const [slideWidth, setSlideWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(() => (
     typeof window === 'undefined' ? 720 : window.innerWidth
   ));
 
   const reduceMotion = useReducedMotion();
 
-  // Карусель: трансформ трека и ширина слайда (нужна для dragConstraints).
+  // Карусель: горизонтальная прокрутка со scroll-snap (жест считает браузер).
   const galleryRef = useRef<HTMLElement | null>(null);
-  const carouselX = useMotionValue(0);
-  const carouselControls = useDragControls();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const slideWidthRef = useRef(0);
+  const layoutKeyRef = useRef('');
   const activeIndex = useRef(0);
-  // Натуральные пропорции фото: контейнер на ПК повторяет форму снимка.
+  const settleTimer = useRef(0);
+  // Натуральные пропорции фото: контейнер повторяет форму снимка.
   const ratios = useRef<Record<number, number>>({});
 
   // Страница целиком: свайп вправо = назад в каталог.
   const pageX = useMotionValue(0);
   const pageControls = useDragControls();
   const navigatingBack = useRef(false);
-  // Отменяет отложенный «прыжок» после зацикливания, если пользователь
-  // начал новый жест или контейнер изменил размер.
-  const wrapToken = useRef(0);
 
   const product = products.find((item) => item.id === id);
   // Карусель листает весь массив images; cover — запасной вариант,
@@ -65,11 +66,10 @@ export function Detail() {
   const activePhoto = photoCount > 0 ? Math.min(photoIndex, photoCount - 1) : 0;
 
   // Бесконечная карусель: по клону последнего и первого фото по краям.
-  // Свайп через край — это обычный слайд до клона, после которого трек
+  // Свайп через край — это обычный слайд до клона, после которого лента
   // без анимации встаёт на настоящий кадр: картинка та же, прыжка не видно.
   const hasLoop = photoCount > 1;
   const slides = hasLoop ? [photos[photoCount - 1], ...photos, photos[0]] : photos;
-  const virtualActive = hasLoop ? activePhoto + 1 : 0;
   const slideIndexOf = (index: number) => (hasLoop ? index + 1 : index);
 
   useEffect(() => {
@@ -77,16 +77,13 @@ export function Detail() {
   }, [activePhoto]);
 
   // Новый товар — карусель начинается с первого фото.
-  // Layout-эффект: трек встаёт на первый слайд ещё до отрисовки,
-  // иначе на кадр мелькал бы клон последнего фото.
   useLayoutEffect(() => {
     setPhotoIndex(0);
     setPhotoRatio(null);
     ratios.current = {};
     activeIndex.current = 0;
-    carouselX.stop();
-    carouselX.set(0);
-  }, [id, carouselX]);
+    window.clearTimeout(settleTimer.current);
+  }, [id]);
 
   useEffect(() => {
     const onResize = () => setViewportWidth(window.innerWidth);
@@ -94,31 +91,48 @@ export function Detail() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Ширина слайда = ширина контейнера. При ресайзе выравниваем трек
-  // по активному фото без анимации.
+  // Отложенный «прыжок» с клона не должен пережить размонтирование.
+  useEffect(() => () => {
+    window.clearTimeout(settleTimer.current);
+  }, []);
+
+  // Ширина слайда = ширина карусели. При ресайзе (только изменение ширины)
+  // и при смене товара лента без анимации встаёт на нужный кадр.
   useLayoutEffect(() => {
-    const node = galleryRef.current;
-    if (!node) return;
+    const figure = galleryRef.current;
+    const node = scrollRef.current;
+    if (!figure || !node) return;
 
     const measure = () => {
       const width = node.clientWidth;
+      if (!width) return;
+
+      // Смена товара/числа фото должна вернуть ленту на первый кадр,
+      // даже если ширина контейнера не изменилась.
+      const layoutKey = `${id ?? ''}:${photoCount}`;
+      const resized = width !== slideWidthRef.current;
+      const relayout = layoutKey !== layoutKeyRef.current;
+      if (!resized && !relayout) return;
+
       slideWidthRef.current = width;
-      setSlideWidth((prev) => (prev === width ? prev : width));
-      wrapToken.current += 1;
-      carouselX.stop();
-      carouselX.set(-slideIndexOf(activeIndex.current) * width);
+      layoutKeyRef.current = layoutKey;
+      node.scrollTo({
+        left: (hasLoop ? activeIndex.current + 1 : activeIndex.current) * width,
+        behavior: 'auto',
+      });
     };
 
     measure();
     const observer = new ResizeObserver(measure);
-    observer.observe(node);
+    observer.observe(figure);
     return () => observer.disconnect();
-  }, [carouselX, photoCount, id]);
+  }, [hasLoop, photoCount, id]);
 
-  // Пропорции активного фото для десктопной рамки карусели.
-  useEffect(() => {
-    setPhotoRatio(ratios.current[slideIndexOf(activePhoto)] ?? null);
-  }, [activePhoto, photoCount]);
+  // Пропорции активного фото применяем, когда прокрутка остановилась:
+  // смена высоты во время анимации может оборвать плавный скролл.
+  const applyActiveRatio = () => {
+    setPhotoRatio(ratios.current[slideIndexOf(activeIndex.current)] ?? null);
+  };
 
   const rememberRatio = (index: number, image: HTMLImageElement) => {
     const { naturalWidth, naturalHeight } = image;
@@ -131,7 +145,7 @@ export function Detail() {
 
   // Фото из кэша может быть уже complete к моменту монтирования — onLoad
   // тогда не срабатывает. Запоминаем пропорции таких картинок вручную,
-  // иначе на ПК рамка остаётся дефолтной 4/5.
+  // иначе высота карусели остаётся дефолтной.
   useEffect(() => {
     const node = galleryRef.current;
     if (!node) return;
@@ -141,68 +155,108 @@ export function Detail() {
     });
   }, [id, photoCount]);
 
-  // Возврат в предыдущее меню (каталог / архив / поиск).
-  // Если товар открыли по прямой ссылке, истории приложения нет — ведём в каталог.
+  // Возврат в предыдущее меню (каталог / архив / поиск / помощь).
+  // ProductGrid кладёт путь меню в location.state — возвращаемся именно туда.
+  // replace делает жест идемпотентным: если браузер параллельно выполнит
+  // свой нативный «свайп назад», мы всё равно останемся в нужном меню,
+  // а не уедем на две записи истории.
+  // Прямая ссылка на товар: истории приложения нет — ведём в каталог.
   const goBack = () => {
-    const state = window.history.state as { idx?: number } | null;
-    if (state && typeof state.idx === 'number' && state.idx > 0) navigate(-1);
-    else navigate('/');
-  };
+    const from = (location.state as { from?: unknown } | null)?.from;
 
-  const snapToPhoto = (index: number, instant: boolean) => {
-    const width = slideWidthRef.current;
-    wrapToken.current += 1;
-    carouselX.stop();
-    if (!width) return;
-
-    const target = -slideIndexOf(index) * width;
-    if (instant || reduceMotion) {
-      carouselX.set(target);
+    if (typeof from === 'string' && MENU_PATHS.has(from)) {
+      navigate(from, { replace: true });
       return;
     }
 
-    animate(carouselX, target, { type: 'spring', stiffness: 420, damping: 40, mass: 0.9 });
+    const state = window.history.state as { idx?: number } | null;
+    if (state && typeof state.idx === 'number' && state.idx > 0) navigate(-1);
+    else navigate('/', { replace: true });
+  };
+
+  const scrollToVirtual = (virtual: number, smooth: boolean) => {
+    const width = slideWidthRef.current;
+    const node = scrollRef.current;
+    if (!width || !node) return;
+
+    node.scrollTo({
+      left: virtual * width,
+      behavior: smooth && !reduceMotion ? 'smooth' : 'auto',
+    });
+  };
+
+  // Активный кадр по позиции прокрутки (виртуальный индекс → номер фото).
+  const applyScrollIndex = (virtual: number) => {
+    const clamped = Math.max(0, Math.min(slides.length - 1, virtual));
+    const index = hasLoop ? ((clamped - 1 + photoCount) % photoCount) : clamped;
+
+    if (index === activeIndex.current) return;
+
+    activeIndex.current = index;
+    setPhotoIndex(index);
+  };
+
+  // Клон по краю заменяем настоящим кадром, когда прокрутка остановилась:
+  // изображение то же, поэтому перестановка не видна.
+  const settleLoop = () => {
+    const node = scrollRef.current;
+    const width = slideWidthRef.current;
+    if (!node || !width || !hasLoop) return;
+
+    const virtual = Math.round(node.scrollLeft / width);
+    if (virtual <= 0) node.scrollTo({ left: photoCount * width, behavior: 'auto' });
+    else if (virtual >= photoCount + 1) node.scrollTo({ left: width, behavior: 'auto' });
+  };
+
+  // Браузер сам двигает ленту пальцем/колесом; здесь только синхронизируем
+  // индексы, пропорции и точку привязки. Обработчик лёгкий — прокрутка и так
+  // приходит не чаще кадра, поэтому rAF не нужен (в фоновой вкладке он спит).
+  const onCarouselScroll = () => {
+    const node = scrollRef.current;
+    const width = slideWidthRef.current;
+    if (!node || !width) return;
+
+    applyScrollIndex(Math.round(node.scrollLeft / width));
+
+    window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      settleLoop();
+      applyActiveRatio();
+    }, 140);
+  };
+
+  const snapToPhoto = (index: number) => {
+    const width = slideWidthRef.current;
+    const node = scrollRef.current;
+    if (!width || !node) return;
+
+    node.scrollTo({
+      left: slideIndexOf(index) * width,
+      behavior: reduceMotion ? 'auto' : 'smooth',
+    });
   };
 
   const goToPhoto = (next: number) => {
     if (photoCount < 2) return;
 
     const wrapped = ((next % photoCount) + photoCount) % photoCount;
-    const width = slideWidthRef.current;
 
     setPhotoIndex(wrapped);
     activeIndex.current = wrapped;
 
-    if (!width) return;
-
-    wrapToken.current += 1;
-    const token = wrapToken.current;
-    carouselX.stop();
-
-    const spring = { type: 'spring', stiffness: 420, damping: 40, mass: 0.9 } as const;
-
-    if (reduceMotion) {
-      carouselX.set(-slideIndexOf(wrapped) * width);
+    // С края едем на клон соседнего кадра: после остановки settleLoop
+    // переставляет ленту на настоящий слайд — картинка та же, скачка нет.
+    if (hasLoop && next >= photoCount) {
+      scrollToVirtual(photoCount + 1, true);
       return;
     }
 
-    if (next >= photoCount) {
-      // Вперёд с последнего фото: доезжаем до клона первого справа и
-      // без анимации встаём на настоящий первый кадр — то же изображение.
-      void animate(carouselX, -(photoCount + 1) * width, spring).then(() => {
-        if (wrapToken.current !== token) return;
-        carouselX.set(-width);
-      });
-    } else if (next < 0) {
-      // Назад с первого: доезжаем до клона последнего слева, затем
-      // без анимации перескакиваем на настоящий последний кадр.
-      void animate(carouselX, 0, spring).then(() => {
-        if (wrapToken.current !== token) return;
-        carouselX.set(-photoCount * width);
-      });
-    } else {
-      void animate(carouselX, -slideIndexOf(wrapped) * width, spring);
+    if (hasLoop && next < 0) {
+      scrollToVirtual(0, true);
+      return;
     }
+
+    snapToPhoto(wrapped);
   };
 
   const selectPhoto = (index: number) => {
@@ -210,33 +264,7 @@ export function Detail() {
 
     setPhotoIndex(index);
     activeIndex.current = index;
-    snapToPhoto(index, false);
-  };
-
-  // Карусель забирает горизонтальные жесты себе и не отдаёт их
-  // свайпу «назад» на уровне страницы.
-  const onCarouselPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (navigatingBack.current || photoCount < 2) return;
-    if (!event.isPrimary || event.button > 0) return;
-
-    // Новый жест отменяет отложенный переход после зацикливания.
-    wrapToken.current += 1;
-    event.stopPropagation();
-    carouselControls.start(event);
-  };
-
-  const onCarouselDragEnd = (_event: unknown, info: PanInfo) => {
-    const width = slideWidthRef.current || 1;
-    const threshold = Math.min(90, width * 0.16);
-    const next = info.offset.x < -threshold || (info.offset.x < 0 && info.velocity.x < -420);
-    const previous = info.offset.x > threshold || (info.offset.x > 0 && info.velocity.x > 420);
-
-    if (!next && !previous) {
-      snapToPhoto(activeIndex.current, false);
-      return;
-    }
-
-    goToPhoto(activeIndex.current + (next ? 1 : -1));
+    snapToPhoto(index);
   };
 
   // Свайп вправо в любом месте карточки (кроме карусели) закрывает её.
@@ -336,42 +364,33 @@ export function Detail() {
               aria-label={`${product.name}: фото ${activePhoto + 1} из ${photoCount}`}
               style={photoRatio ? ({ '--photo-ratio': photoRatio } as CSSProperties) : undefined}
             >
-              <motion.div
-                className="detail-carousel-track"
-                style={{ x: carouselX, touchAction: 'pan-y' }}
-                drag="x"
-                dragListener={false}
-                dragControls={carouselControls}
-                dragDirectionLock
-                dragConstraints={{
-                  left: -(photoCount + 1 - virtualActive) * slideWidth,
-                  right: virtualActive * slideWidth,
-                }}
-                dragElastic={0.18}
-                dragMomentum={false}
-                onPointerDown={onCarouselPointerDown}
-                onDragEnd={onCarouselDragEnd}
+              <div
+                className="detail-carousel-viewport"
+                ref={scrollRef}
+                onScroll={onCarouselScroll}
               >
-                {slides.map((source, index) => (
-                  <div
-                    className="detail-carousel-slide"
-                    key={`${source}-${index}`}
-                    aria-hidden={
-                      hasLoop && (index === 0 || index === photoCount + 1)
-                        ? true
-                        : undefined
-                    }
-                  >
-                    <img
-                      src={resolveAssetUrl(source)}
-                      alt={`${product.name} — фото ${index + 1}`}
-                      decoding="async"
-                      draggable={false}
-                      onLoad={(event) => rememberRatio(index, event.currentTarget)}
-                    />
-                  </div>
-                ))}
-              </motion.div>
+                <div className="detail-carousel-track">
+                  {slides.map((source, index) => (
+                    <div
+                      className="detail-carousel-slide"
+                      key={`${source}-${index}`}
+                      aria-hidden={
+                        hasLoop && (index === 0 || index === photoCount + 1)
+                          ? true
+                          : undefined
+                      }
+                    >
+                      <img
+                        src={resolveAssetUrl(source)}
+                        alt={`${product.name} — фото ${index + 1}`}
+                        decoding="async"
+                        draggable={false}
+                        onLoad={(event) => rememberRatio(index, event.currentTarget)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {photoCount > 1 && (
                 <>

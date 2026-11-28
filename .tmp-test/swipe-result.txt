@@ -1,0 +1,18 @@
+﻿=== BEFORE ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 1 ╨╕╨╖ 4 ratioVar 
+track {"x":-354,"y":176,"w":366,"h":366} style {"w":"366px","h":"366px","disp":"flex","ta":"pan-y","tf":"matrix(1, 0, 0, 1, -366, 0)"}
+dots n=4 active=0 {"x":174,"y":528,"w":7,"h":7}
+=== AFTER CLICK ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 2 ╨╕╨╖ 4 ratioVar 0.75
+track {"x":-720,"y":176,"w":366,"h":366} style {"w":"366px","h":"366px","disp":"flex","ta":"pan-y","tf":"matrix(1, 0, 0, 1, -732, 0)"}
+dots n=4 active=1 {"x":174,"y":528,"w":6,"h":6}
+=== AFTER SWIPE ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 2 ╨╕╨╖ 4 ratioVar 0.75
+track {"x":-940,"y":176,"w":366,"h":366} style {"w":"366px","h":"366px","disp":"flex","ta":"pan-y","tf":"matrix(1, 0, 0, 1, -952, 0)"}
+dots n=4 active=1 {"x":174,"y":528,"w":6,"h":6}
+        const track = doc.querySelector('.detail-carousel-track');
+        log(`=== ${tag} ===`);
+        log(`aria ${fig && fig.getAttribute('aria-label')} ratioVar ${fig && fig.style.getPropertyValue('--photo-ratio')}`);
+        log(`track ${JSON.stringify(rect(track))} style ${JSON.stringify(track && {
+        log(`dots n=${dots.length} active=${dots.findIndex((d) => d.classList.contains('active'))} ${JSON.stringify(rect(dots[0]))}`);
+          buttons: type === 'pointerup' ? 0 : 1,

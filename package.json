@@ -17,7 +17,8 @@
     "bg": "powershell -ExecutionPolicy Bypass -File scripts/build-bg.ps1",
     "check": "node scripts/api-check.mjs",
     "check:publish": "node scripts/publish-check.mjs",
-    "tap-check": "node scripts/tap-check.mjs"
+    "tap-check": "node scripts/tap-check.mjs",
+    "swipe-check": "node scripts/swipe-check.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

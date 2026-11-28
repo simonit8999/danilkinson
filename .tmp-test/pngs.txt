@@ -1,0 +1,8 @@
+﻿
+Name                Length
+----                ------
+detail-before.png   568163
+detail-desktop.png 1693718
+
+
+

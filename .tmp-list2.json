@@ -1,0 +1,78 @@
+﻿NEW OK {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/inspector.html?ws=127.0.0.1:9445/devtools/page/3162D53E2E76CAB1CABCE9DD20CCFE71",
+   "id": "3162D53E2E76CAB1CABCE9DD20CCFE71",
+   "title": "",
+   "type": "page",
+   "url": "http://127.0.0.1:3000/#/item/ua-mwxhdude",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/3162D53E2E76CAB1CABCE9DD20CCFE71"
+}
+
+[ {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/inspector.html?ws=127.0.0.1:9445/devtools/page/3162D53E2E76CAB1CABCE9DD20CCFE71",
+   "faviconUrl": "http://127.0.0.1:3000/icons/icon-32.png",
+   "id": "3162D53E2E76CAB1CABCE9DD20CCFE71",
+   "title": "UNDEFINED ARCH · BRUTALIST",
+   "type": "page",
+   "url": "http://127.0.0.1:3000/#/item/ua-mwxhdude",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/3162D53E2E76CAB1CABCE9DD20CCFE71"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/inspector.html?ws=127.0.0.1:9445/devtools/page/F6A6703CCCE29AE6400D35A2616CC852",
+   "id": "F6A6703CCCE29AE6400D35A2616CC852",
+   "title": "Новая вкладка",
+   "type": "page",
+   "url": "chrome://newtab/",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/F6A6703CCCE29AE6400D35A2616CC852"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/inspector.html?ws=127.0.0.1:9445/devtools/page/699AEF8BA107C63431649F2A713ADA08",
+   "id": "699AEF8BA107C63431649F2A713ADA08",
+   "parentId": "F6A6703CCCE29AE6400D35A2616CC852",
+   "title": "chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=",
+   "type": "iframe",
+   "url": "chrome-untrusted://new-tab-page/one-google-bar?paramsencoded=",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/699AEF8BA107C63431649F2A713ADA08"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/inspector.html?ws=127.0.0.1:9445/devtools/page/93148156107D7D07A86B693B3EAA0DA8",
+   "id": "93148156107D7D07A86B693B3EAA0DA8",
+   "title": "Omnibox Popup",
+   "type": "browser_ui",
+   "url": "chrome://omnibox-popup.top-chrome/",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/93148156107D7D07A86B693B3EAA0DA8"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/worker_app.html?ws=127.0.0.1:9445/devtools/page/F72EC123450927F19BE92BD9974F054F",
+   "id": "F72EC123450927F19BE92BD9974F054F",
+   "title": "Service Worker chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js",
+   "type": "service_worker",
+   "url": "chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/thunk.js",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/F72EC123450927F19BE92BD9974F054F"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/worker_app.html?ws=127.0.0.1:9445/devtools/page/8575A95769824233B800CE9487469245",
+   "id": "8575A95769824233B800CE9487469245",
+   "title": "Service Worker chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js",
+   "type": "service_worker",
+   "url": "chrome-extension://admccjkmockfdflocgggjfgdacdodkdf/background.js",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/8575A95769824233B800CE9487469245"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/worker_app.html?ws=127.0.0.1:9445/devtools/page/F95D4C1BB8B6FC0A50F30EA032C554A1",
+   "id": "F95D4C1BB8B6FC0A50F30EA032C554A1",
+   "title": "Service Worker chrome-extension://fignfifoniblkonapihmkfakmlgkbkcf/service_worker.js",
+   "type": "service_worker",
+   "url": "chrome-extension://fignfifoniblkonapihmkfakmlgkbkcf/service_worker.js",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/F95D4C1BB8B6FC0A50F30EA032C554A1"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@b8c2be851f62f6a394ec57955d7f31335d7cb6d4/worker_app.html?ws=127.0.0.1:9445/devtools/page/87F227DE0B0233541824C7F878F10E13",
+   "id": "87F227DE0B0233541824C7F878F10E13",
+   "title": "Service Worker http://127.0.0.1:3000/sw.js",
+   "type": "service_worker",
+   "url": "http://127.0.0.1:3000/sw.js",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:9445/devtools/page/87F227DE0B0233541824C7F878F10E13"
+} ]
+

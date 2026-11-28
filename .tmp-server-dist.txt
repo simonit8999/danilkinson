@@ -1,0 +1,16 @@
+﻿
+server\index.mjs:2: * Локальный сервер каталога: отдаёт собранный сайт (dist) и API.
+server\index.mjs:36:const DIST = join(ROOT, 'dist');
+server\index.mjs:303:  if (name === 'index.html' || name === 'sw.js' || name === 'manifest.
+json') {
+server\index.mjs:366:  if (!rel || rel.endsWith('/')) rel += 'index.html';
+server\index.mjs:368:  const target = resolve(DIST, rel);
+server\index.mjs:369:  if (target !== DIST && !target.startsWith(DIST + sep)) return false;
+server\index.mjs:374:  return serveFile(req, res, join(DIST, 'index.html'));
+server\index.mjs:488:    // SPA-fallback (index.html со статусом 200), и клиент считал серв
+ер живым,
+server\index.mjs:543:if (!(await isFile(join(DIST, 'index.html')))) {
+server\index.mjs:544:  console.warn('[server] dist/index.html not found: run "npm run build
+" first');
+
+

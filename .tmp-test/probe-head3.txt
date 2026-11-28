@@ -1,0 +1,20 @@
+﻿<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <title>carousel probe</title>
+    <style>
+      body { margin: 0; font: 12px monospace; background: #fff; }
+      #out { padding: 8px; white-space: pre-wrap; }
+      iframe { width: 390px; height: 844px; border: 1px solid #ccc; }
+    </style>
+  </head>
+  <body>
+    <pre id="out">pending
+ready=true
+=== BEFORE ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":201,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=366 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":-354,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":12,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":378,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":744,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1110,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1476,"y":201,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]

@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>single photo probe</title>
+  </head>
+  <body>
+    <pre id="out">pending
+</pre>
+    <iframe id="f" src="/#/item/ua-mwzcgpzb" style="width:390px;height:844px;border:1px solid #ccc"></iframe>
+    <script>
+      const out = document.getElementById('out');
+      const frame = document.getElementById('f');
+      const log = (text) => {
+        out.textContent += text + '\n';
+      };
+      const rect = (el) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      };
+
+      frame.addEventListener('load', () => {
+        setTimeout(() => {
+          const doc = frame.contentDocument;
+          const win = frame.contentWindow;
+          const cs = (el) => (el ? win.getComputedStyle(el) : null);
+          const fig = doc.querySelector('.detail-photo');
+          const vp = doc.querySelector('.detail-carousel-viewport');
+          const slides = [...doc.querySelectorAll('.detail-carousel-slide')];
+
+          log(`slides=${slides.length} arrows=${doc.querySelectorAll('.detail-carousel-arrow').length} dots=${doc.querySelectorAll('.detail-carousel-dot').length}`);
+          log(`fig ${JSON.stringify(rect(fig))} radius=${cs(fig) && cs(fig).borderRadius} ar=${cs(fig) && cs(fig).aspectRatio} ratioVar=${fig.style.getPropertyValue('--photo-ratio')}`);
+          log(`vp scrollLeft=${vp.scrollLeft} clientWidth=${vp.clientWidth} scrollWidth=${vp.scrollWidth} overflow=${cs(vp).overflowX}`);
+          log(`slide ${JSON.stringify(rect(slides[0]))} docScrollWidth=${doc.documentElement.scrollWidth} innerWidth=${win.innerWidth}`);
+        }, 1500);
+      });
+    </script>
+  </body>
+</html>

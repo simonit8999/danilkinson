@@ -1,0 +1,3 @@
+﻿FAIL http://127.0.0.1:9333/json/version
+FAIL http://localhost:9333/json/version
+25

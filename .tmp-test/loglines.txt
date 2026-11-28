@@ -1,0 +1,11 @@
+﻿91: console.log('loaded:', loaded);
+137: console.log('--- BEFORE ---');
+138: console.log(JSON.stringify(await evaluate(DIAG), null, 2));
+147: console.log('arrow center:', arrow);
+154:   console.log('--- AFTER ARROW CLICK ---');
+155:   console.log(JSON.stringify(await evaluate(STATE), null, 2));
+164: console.log('photo center:', box);
+179: console.log('--- AFTER SWIPE ---');
+180: console.log(JSON.stringify(await evaluate(STATE), null, 2));
+182: console.log('--- CONSOLE EVENTS ---');
+184:   console.log(event.method, JSON.stringify(event.params).slice(0, 600));

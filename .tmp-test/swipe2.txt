@@ -1,0 +1,13 @@
+﻿=== BEFORE ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 1 ╨╕╨╖ 4 ratioVar 
+dots n=4 active=0 {"x":174,"y":528,"w":7,"h":7}
+=== AFTER CLICK ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 2 ╨╕╨╖ 4 ratioVar 0.75
+dots n=4 active=1 {"x":174,"y":528,"w":7,"h":7}
+=== AFTER SWIPE ===
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 2 ╨╕╨╖ 4 ratioVar 0.75
+dots n=4 active=1 {"x":174,"y":528,"w":7,"h":7}
+        log(`=== ${tag} ===`);
+        log(`aria ${fig && fig.getAttribute('aria-label')} ratioVar ${fig && fig.style.getPropertyValue('--photo-ratio')}`);
+        log(`dots n=${dots.length} active=${dots.findIndex((d) => d.classList.contains('active'))} ${JSON.stringify(rect(dots[0]))}`);
+          buttons: type === 'pointerup' ? 0 : 1,

@@ -35,7 +35,8 @@ public/                  копируется в сборку как есть
 scripts/                 вспомогательные скрипты (в сборку не попадают):
                          make-icons.ps1 (иконки), build-bg.ps1 (фон),
                          api-check.mjs (проверка сервера),
-                         publish-check.mjs (проверка публикации каталога)
+                         publish-check.mjs (проверка публикации каталога),
+                         tap-check.mjs / swipe-check.mjs (жесты в headless Chrome)
 server/                  локальный сервер каталога (статика dist + API) и publish.mjs
 shared/admin-hashes.json хеши админов: читают и сайт, и сервер
 .env.example             PORT / HOST / VITE_API_URL
@@ -53,6 +54,8 @@ npm run typecheck  # только проверка типов
 npm run server     # локальный сервер каталога + сайта: http://127.0.0.1:3000
 npm run start      # build + server одной командой
 npm run check      # проверка API сервера (health, catalog, preflight)
+npm run tap-check  # вход в админку тройным тапом (headless Chrome)
+npm run swipe-check # свайпы вкладок/карточки и карусель (headless Chrome, нужен dist)
 npm run tunnel     # ngrok http 3000 (доступ из интернета)
 npm run publish    # server/data/products.json -> public/data/products.json
 npm run bg         # новый фон: "Задний фон 2.0.png" -> бесшовный тайл WebP

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { Product } from '../types';
 import { ProductCard } from './ProductCard';
 
@@ -9,6 +9,7 @@ interface ProductGridProps {
 
 export function ProductGrid({ products, emptyText }: ProductGridProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="product-grid">
@@ -18,7 +19,12 @@ export function ProductGrid({ products, emptyText }: ProductGridProps) {
         <ProductCard
           key={product.id}
           product={product}
-          onOpen={() => navigate(`/item/${encodeURIComponent(product.id)}`)}
+          // Запоминаем меню, из которого открыли товар: свайп «назад»
+          // вернёт именно туда, а не на произвольную запись истории.
+          onOpen={() => navigate(
+            `/item/${encodeURIComponent(product.id)}`,
+            { state: { from: location.pathname } },
+          )}
         />
       ))}
     </div>

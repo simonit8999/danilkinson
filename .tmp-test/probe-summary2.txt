@@ -1,0 +1,53 @@
+﻿ready=true
+=== BEFORE ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":176,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=366 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":-354,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":12,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":378,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":744,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1110,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1476,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]
+arrows [{"r":{"x":16,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"},{"r":{"x":336,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"}]
+dots n=4 active=0
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 1 ╨╕╨╖ 4
+=== AFTER ARROW CLICK ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":176,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=732 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":-720,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-354,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":12,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":378,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":744,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1110,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]
+arrows [{"r":{"x":16,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"},{"r":{"x":336,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"}]
+dots n=4 active=1
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 2 ╨╕╨╖ 4
+=== AFTER SWIPE (photo 3) ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":176,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=1098 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":-1086,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-720,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-354,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":12,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":378,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":744,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]
+arrows [{"r":{"x":16,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"},{"r":{"x":336,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"}]
+dots n=4 active=2
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 3 ╨╕╨╖ 4
+=== AFTER WRAP TO LAST ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":176,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=0 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":12,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":378,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":744,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1110,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1476,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":1842,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]
+arrows [{"r":{"x":16,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"},{"r":{"x":336,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"}]
+dots n=4 active=2
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 3 ╨╕╨╖ 4
+=== AFTER WRAP TO FIRST ===
+viewport 390 docScrollWidth 390
+fig {"x":12,"y":176,"w":366,"h":488} ar=0.75 / 1 radius=16px ratioVar=0.75
+vp overflow-x=auto snap=x mandatory ta=manipulation
+vp scrollLeft=1830 clientWidth=366 scrollWidth=2196
+track display=flex w=366px
+slides [{"r":{"x":-1818,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-1452,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-1086,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-720,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":-354,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"},{"r":{"x":12,"y":176,"w":366,"h":488},"flex":"0 0 100%","snap":"start"}]
+arrows [{"r":{"x":16,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"},{"r":{"x":336,"y":401,"w":38,"h":38},"bg":"rgba(255, 255, 255, 0.55)","z":"3"}]
+dots n=4 active=2
+aria EXCLUSIVE CONVERSE Studded: ╤Д╨╛╤В╨╛ 3 ╨╕╨╖ 4
+        log(`=== ${tag} ===`);
+        log(`ready=${ready}`);

@@ -113,6 +113,10 @@
 
     html, body {
       overflow: hidden;
+      /* Горизонтальный свайп — это жест интерфейса (вкладки/назад), а не
+         нативная навигация браузера: иначе Chrome делает history.back()
+         параллельно с нашим goBack(), и история уезжает на два шага. */
+      overscroll-behavior: none;
     }
 
     body {
@@ -219,6 +223,10 @@
       -webkit-overflow-scrolling: touch;
       position: relative;
       z-index: 1;
+      /* Свайп по горизонтали — жест приложения, а не навигация браузера;
+         по вертикали не даём странице «оттягиваться» (pull-to-refresh). */
+      overscroll-behavior-x: none;
+      overscroll-behavior-y: contain;
     }
 
     .container {
@@ -545,12 +553,12 @@
 
     /* Карусель фото: без рамки, только скруглённые углы.
        --photo-ratio выставляет Detail.tsx по натуральным размерам фото,
-       поэтому на ПК контейнер повторяет пропорции снимка (а не режет
-       квадратное фото в рамке 4/5). */
+       поэтому контейнер повторяет пропорции снимка, а не режет его
+       в квадратной рамке. */
     .detail-photo {
       position: relative;
       width: 100%;
-      aspect-ratio: 1 / 1;
+      aspect-ratio: var(--photo-ratio, 1);
       margin: 0;
       background: transparent;
       border: 0;
@@ -558,22 +566,46 @@
       border-radius: var(--radius-photo) !important;
       overflow: hidden;
       touch-action: pan-y pinch-zoom;
+      /* Высота контейнера следует за пропорциями активного фото. Переход
+         сглаживает смену кадра: без него галерея прыгает по высоте. */
+      transition: aspect-ratio 0.3s var(--ease-apple);
+    }
+
+    /* Прокручиваемая лента: жест считает браузер (палец/трекпад/колесо),
+       поэтому свайп по фото листает кадры без JS-перехвата. */
+    .detail-carousel-viewport {
+      width: 100%;
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+
+    .detail-carousel-viewport::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
     }
 
     .detail-carousel-track {
       display: flex;
       width: 100%;
       height: 100%;
-      will-change: transform;
-      touch-action: pan-y pinch-zoom;
-      /* Трансформом управляет framer-motion (drag="x"), CSS-переход
-         здесь только конфликтовал бы с инерцией пальца. */
+      /* Трансформом больше никто не управляет: лента едет прокруткой. */
     }
 
+    /* Слайд занимает ровно ширину карусели и не наезжает на соседние. */
     .detail-carousel-slide {
       flex: 0 0 100%;
       width: 100%;
+      min-width: 100%;
       height: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -594,13 +626,13 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Минималистичные полупрозрачные стрелки: без фона, рамки и blur —
-       только тонкий шеврон, как на мобильных. */
+    /* Полупрозрачные стеклянные стрелки: читаются на любом фото
+       (тёмный шеврон на светлой подложке), но не перекрывают снимок. */
     .detail-carousel-arrow {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 2;
+      z-index: 3;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -609,30 +641,30 @@
       padding: 0;
       border: 0;
       border-radius: var(--radius-pill) !important;
-      background: transparent;
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-      box-shadow: none;
-      color: rgba(46, 34, 22, 0.5);
+      background: rgba(255, 255, 255, 0.55);
+      -webkit-backdrop-filter: blur(10px) saturate(160%);
+      backdrop-filter: blur(10px) saturate(160%);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65), 0 6px 18px rgba(0, 0, 0, 0.12);
+      color: rgba(28, 22, 16, 0.8);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: clamp(30px, 3.4vw, 40px);
       font-weight: 300;
       line-height: 1;
       cursor: pointer;
-      opacity: 0.75;
+      opacity: 0.9;
       -webkit-tap-highlight-color: transparent;
-      transition: color 0.2s ease, opacity 0.2s ease;
+      transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
     }
 
     .detail-carousel-arrow:hover {
-      background: transparent;
+      background: rgba(255, 255, 255, 0.78);
       border-color: transparent;
-      color: rgba(46, 34, 22, 0.9);
+      color: rgba(28, 22, 16, 0.95);
       opacity: 1;
     }
 
     .detail-carousel-arrow:active {
-      opacity: 0.5;
+      opacity: 0.7;
     }
 
     .detail-carousel-arrow:focus-visible {
@@ -1608,12 +1640,6 @@ body {
     grid-area: info;
   }
 
-  .detail-photo {
-    /* Пропорции активного фото (Detail.tsx выставляет --photo-ratio):
-       квадратный снимок → квадратная рамка со скруглёнными углами. */
-    aspect-ratio: var(--photo-ratio, 4 / 5);
-  }
-
   .archive-grid {
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 10px;
@@ -1771,6 +1797,7 @@ body::-webkit-scrollbar,
   .nav-label,
   .nav-label::after,
   .detail-carousel-arrow,
+  .detail-photo,
   .modal-actions button {
     transition: none;
   }

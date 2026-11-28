@@ -1,0 +1,13 @@
+﻿
+[36mvite v8.3.8 [32mbuilding client environment for production...[36m[39m
+transforming...
+тЬУ 479 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.41 kB тФВ gzip:   0.62 kB
+dist/assets/index-DjTAWcPD.css   31.22 kB тФВ gzip:   6.31 kB
+dist/assets/panel-Y7CXc2u4.js    13.55 kB тФВ gzip:   4.74 kB
+dist/assets/index-DEf6Xksb.js   454.03 kB тФВ gzip: 147.01 kB
+
+[32mтЬУ built in 1.27s[39m
+build_exit=0
